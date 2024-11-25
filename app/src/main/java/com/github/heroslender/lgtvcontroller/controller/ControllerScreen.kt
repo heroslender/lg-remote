@@ -40,13 +40,45 @@ import com.connectsdk.device.ConnectableDevice
 import com.connectsdk.device.DevicePickerListView
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.device.Device
+import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 
 @Preview(showBackground = true)
 @Composable
-fun ControlPreview() {
+fun ControlPreview(
+    isConnected: Boolean = false,
+    isFavorite: Boolean = false,
+) {
+    val device = if (isConnected) PreviewDevice else null
+    val controllerUiState = ControllerUiState(
+        device = device,
+        deviceName = device?.friendlyName,
+        deviceStatus = device?.let { runBlocking { it.status.first() } }
+            ?: DeviceStatus.DISCONNECTED,
+        isFavorite = isFavorite
+    )
+
     LGTVControllerTheme {
-        ControllerScreen()
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp)
+        ) {
+            Header(
+                deviceName = controllerUiState.deviceName,
+                deviceStatus = controllerUiState.deviceStatus.name,
+                isFavorite = controllerUiState.isFavorite,
+                connect = { },
+                onFavouriteToggle = { },
+            )
+
+            Controls(controllerUiState.device)
+        }
     }
 }
 
@@ -386,4 +418,32 @@ fun RowScope.ChannelControls(device: Device?) {
             }
         }
     )
+}
+
+object PreviewDevice : Device {
+    override val id: String
+        get() = "asddgres--sdfsdf-sdf"
+    override val friendlyName: String
+        get() = "Your Awesome TV"
+    override val status: Flow<DeviceStatus>
+        get() = flowOf(DeviceStatus.CONNECTED)
+
+    override fun powerOff() {}
+    override fun volumeUp() {}
+    override fun volumeDown() {}
+    override fun channelUp() {}
+    override fun channelDown() {}
+    override fun up() {}
+    override fun down() {}
+    override fun left() {}
+    override fun right() {}
+    override fun ok() {}
+    override fun back() {}
+    override fun home() {}
+    override fun info() {}
+    override fun source() {}
+    override fun launchNetflix() {}
+    override fun launchApp(appId: String) {}
+    override fun disconnect() {}
+    override fun updateStatus(status: DeviceStatus) {}
 }
