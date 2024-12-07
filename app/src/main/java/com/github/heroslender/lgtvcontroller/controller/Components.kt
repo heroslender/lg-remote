@@ -1,11 +1,13 @@
 package com.github.heroslender.lgtvcontroller.controller
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
@@ -62,6 +64,7 @@ fun CIconButton(
 fun CButton(
     modifier: Modifier = Modifier,
     shape: Shape = ShapeDefaults.ExtraSmall,
+    contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -69,6 +72,7 @@ fun CButton(
     Button(
         onClick = onClick,
         shape = shape,
+        contentPadding = contentPadding,
         colors = ButtonColors(
             containerColor = MaterialTheme.colorScheme.secondary,
             contentColor = MaterialTheme.colorScheme.onSecondary,

@@ -9,4 +9,6 @@ therefore unusable, so I decided to make an add free one that I could use withou
 
 Light Theme                |  Dark Theme
 :-------------------------:|:-------------------------:
+![Controller light theme](.github/assets/device_list.png)  |  ![Controller dark theme](.github/assets/device_list_dark.png)
+![Controller light theme](.github/assets/device_list_found.png)  |  ![Controller dark theme](.github/assets/device_list_found_dark.png)
 ![Controller light theme](.github/assets/controller.png)  |  ![Controller dark theme](.github/assets/controller_dark.png)

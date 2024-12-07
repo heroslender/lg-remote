@@ -57,6 +57,9 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.protobuf.javalite)
 
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+
     // Dependency Injection
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.hilt.android)

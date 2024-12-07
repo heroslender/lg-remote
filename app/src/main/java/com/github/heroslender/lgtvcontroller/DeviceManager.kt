@@ -14,6 +14,7 @@ import com.github.heroslender.lgtvcontroller.device.DeviceListener
 import com.github.heroslender.lgtvcontroller.device.LgDevice
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -27,6 +28,10 @@ class DeviceManager(
     private var _connectedDevice: MutableStateFlow<Device?> = MutableStateFlow(null)
     val connectedDevice: StateFlow<Device?>
         get() = _connectedDevice
+
+    private var _devices: MutableStateFlow<List<ConnectableDevice>> = MutableStateFlow(emptyList())
+    val devices: StateFlow<List<ConnectableDevice>>
+        get() = _devices
 
     private var hasConnected = false
 
@@ -44,10 +49,25 @@ class DeviceManager(
         )
         DiscoveryManager.getInstance().addListener(this)
         DiscoveryManager.getInstance().start()
+
+        scope.launch {
+            while (!hasConnected) {
+                for (discoveryProvider in DiscoveryManager.getInstance().discoveryProviders) {
+                    Log.d("Device_Manager", "rescan :::: " + discoveryProvider::class.simpleName)
+                    discoveryProvider.rescan()
+                }
+
+                delay(2000)
+            }
+        }
     }
 
     fun setDeviceDisconnected() {
         _connectedDevice.tryEmit(null)
+    }
+
+    fun ConnectableDevice.isCompatible(): Boolean {
+        return getServiceByName(WebOSTVService.ID) != null
     }
 
     override fun onDeviceAdded(manager: DiscoveryManager, device: ConnectableDevice) {
@@ -61,12 +81,15 @@ class DeviceManager(
             if (!hasConnected
                 && connectedDevice.value == null
                 && favorite == device.id
-                && device.getServiceByName(WebOSTVService.ID) != null
+                && device.isCompatible()
             ) {
                 Log.d("Device_Manager", "onDeviceAdded :::: Connecting to device favorite")
                 connect(device)
             }
         }
+
+        if (device.isCompatible())
+            _devices.tryEmit(listOf(*devices.value.toTypedArray(), device))
     }
 
     override fun onDeviceUpdated(manager: DiscoveryManager, device: ConnectableDevice) {
@@ -77,16 +100,24 @@ class DeviceManager(
             if (!hasConnected
                 && connectedDevice.value == null
                 && favorite == device.id
-                && device.getServiceByName(WebOSTVService.ID) != null
+                && device.isCompatible()
             ) {
                 Log.d("Device_Manager", "onDeviceAdded :::: Connecting to device favorite")
                 connect(device)
+            }
+        }
+
+        if (device.isCompatible()) {
+            val devices = devices.value.toTypedArray()
+            if (!devices.contains(device)) {
+                _devices.tryEmit(listOf(*devices, device))
             }
         }
     }
 
     override fun onDeviceRemoved(manager: DiscoveryManager, device: ConnectableDevice) {
         Log.d("Device_Manager", "onDeviceRemoved :::: ${device.friendlyName}")
+        _devices.tryEmit(devices.value.toMutableList().apply { remove(device) })
     }
 
     override fun onDiscoveryFailed(manager: DiscoveryManager, error: ServiceCommandError) {
