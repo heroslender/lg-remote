@@ -11,7 +11,10 @@ import com.connectsdk.service.WebOSTVService
 import com.connectsdk.service.command.ServiceCommandError
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceListener
-import com.github.heroslender.lgtvcontroller.device.LgDevice
+import com.github.heroslender.lgtvcontroller.device.DeviceStatus
+import com.github.heroslender.lgtvcontroller.device.impl.LgDevice
+import com.github.heroslender.lgtvcontroller.device.impl.LgNetworkDevice
+import com.github.heroslender.lgtvcontroller.device.NetworkDevice
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -29,8 +32,8 @@ class DeviceManager(
     val connectedDevice: StateFlow<Device?>
         get() = _connectedDevice
 
-    private var _devices: MutableStateFlow<List<ConnectableDevice>> = MutableStateFlow(emptyList())
-    val devices: StateFlow<List<ConnectableDevice>>
+    private var _devices: MutableStateFlow<List<NetworkDevice>> = MutableStateFlow(emptyList())
+    val devices: StateFlow<List<NetworkDevice>>
         get() = _devices
 
     private var hasConnected = false
@@ -88,8 +91,9 @@ class DeviceManager(
             }
         }
 
-        if (device.isCompatible())
-            _devices.tryEmit(listOf(*devices.value.toTypedArray(), device))
+        if (device.isCompatible()) {
+            _devices.tryEmit(listOf(*devices.value.toTypedArray(), device.toNetworkDevice()))
+        }
     }
 
     override fun onDeviceUpdated(manager: DiscoveryManager, device: ConnectableDevice) {
@@ -109,15 +113,15 @@ class DeviceManager(
 
         if (device.isCompatible()) {
             val devices = devices.value.toTypedArray()
-            if (!devices.contains(device)) {
-                _devices.tryEmit(listOf(*devices, device))
+            if (devices.indexOfFirst { it.id == device.id } == -1) {
+                _devices.tryEmit(listOf(*devices, device.toNetworkDevice()))
             }
         }
     }
 
     override fun onDeviceRemoved(manager: DiscoveryManager, device: ConnectableDevice) {
         Log.d("Device_Manager", "onDeviceRemoved :::: ${device.friendlyName}")
-        _devices.tryEmit(devices.value.toMutableList().apply { remove(device) })
+        _devices.tryEmit(devices.value.toMutableList().apply { removeIf { it.id == device.id } })
     }
 
     override fun onDiscoveryFailed(manager: DiscoveryManager, error: ServiceCommandError) {
@@ -135,5 +139,16 @@ class DeviceManager(
 
         _connectedDevice.value = device
         hasConnected = true
+    }
+
+    private fun ConnectableDevice.toNetworkDevice(): NetworkDevice {
+        return LgNetworkDevice(
+            id = id,
+            friendlyName = friendlyName,
+            status = if (isConnected) DeviceStatus.CONNECTED else DeviceStatus.DISCONNECTED,
+            connectToDevice = {
+                connect(this)
+            }
+        )
     }
 }

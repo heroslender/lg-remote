@@ -1,7 +1,9 @@
-package com.github.heroslender.lgtvcontroller.device
+package com.github.heroslender.lgtvcontroller.device.impl
 
 import com.connectsdk.device.ConnectableDevice
 import com.connectsdk.service.WebOSTVService
+import com.github.heroslender.lgtvcontroller.device.Device
+import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.utils.sendSpecialKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

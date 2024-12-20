@@ -2,7 +2,7 @@
 
 package com.github.heroslender.lgtvcontroller.devicelist
 
-import android.content.res.Configuration
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -58,7 +58,7 @@ import kotlin.math.pow
 @Preview(
     group = "no devices",
     showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+//    uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 fun PreviewDeviceList() {
@@ -82,6 +82,7 @@ fun PreviewDeviceList() {
 //    uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
+@SuppressLint("UnrememberedMutableState")
 fun PreviewDeviceListFound() {
     val devices = listOf(
         DeviceItemData(
@@ -106,15 +107,15 @@ fun PreviewDeviceListFound() {
 
     LGTVControllerTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        SharedTransitionLayout {
-            AnimatedContent(true, label = "found devices transition") { _ ->
-                HasDevices(
-                    devices,
-                    navigateToController = {},
-                    animatedVisibilityScope = this@AnimatedContent,
-                    sharedTransitionScope = this@SharedTransitionLayout
-                )
-            }
+            SharedTransitionLayout {
+                AnimatedContent(true, label = "found devices transition") { _ ->
+                    HasDevices(
+                        devices,
+                        navigateToController = {},
+                        animatedVisibilityScope = this@AnimatedContent,
+                        sharedTransitionScope = this@SharedTransitionLayout
+                    )
+                }
             }
         }
     }
@@ -278,9 +279,11 @@ fun DeviceItem(
     deviceData: DeviceItemData,
     navigateToController: () -> Unit
 ) {
+    val status = deviceData.status
+
     CButton(
         onClick = {
-            if (deviceData.status == DeviceStatus.DISCONNECTED) {
+            if (status == DeviceStatus.DISCONNECTED) {
                 deviceData.connect()
             }
             navigateToController()
@@ -293,7 +296,7 @@ fun DeviceItem(
         Row(modifier = Modifier.fillMaxWidth()) {
             Icon(
                 painterResource(
-                    if (deviceData.status != DeviceStatus.DISCONNECTED) R.drawable.baseline_connected_tv_24
+                    if (status != DeviceStatus.DISCONNECTED) R.drawable.baseline_connected_tv_24
                     else R.drawable.baseline_tv_24
                 ),
                 "contentDescription",
@@ -307,7 +310,7 @@ fun DeviceItem(
                 Text(deviceData.displayName)
                 val subText = if (!deviceData.isPoweredOn)
                     "Offline"
-                else if (deviceData.status == DeviceStatus.DISCONNECTED)
+                else if (status == DeviceStatus.DISCONNECTED)
                     "Connect"
                 else
                     "Disconnect"

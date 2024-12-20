@@ -2,9 +2,7 @@ package com.github.heroslender.lgtvcontroller.devicelist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.connectsdk.device.ConnectableDevice
 import com.github.heroslender.lgtvcontroller.DeviceManager
-import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +20,7 @@ class DeviceListViewModel @Inject constructor(
             devices = devices.map { device ->
                 DeviceItemData(
                     displayName = device.friendlyName,
-                    status = if (device.isConnected) DeviceStatus.CONNECTED else DeviceStatus.DISCONNECTED,
+                    status = device.status,
                     isPoweredOn = true,
                     connect = {
                         val curr = deviceManager.connectedDevice.value
@@ -35,7 +33,7 @@ class DeviceListViewModel @Inject constructor(
                             curr.disconnect()
                         }
 
-                        connect(device)
+                        device.connect()
                     }
                 )
             }
@@ -56,9 +54,5 @@ class DeviceListViewModel @Inject constructor(
 
     fun onDeviceConnected(onDeviceConnected: () -> Unit = {}) {
         this.deviceConnectedListener = onDeviceConnected
-    }
-
-    fun connect(connectableDevice: ConnectableDevice) {
-        deviceManager.connect(connectableDevice)
     }
 }
