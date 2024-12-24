@@ -34,8 +34,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,19 +89,19 @@ fun PreviewDeviceListFound() {
     val devices = listOf(
         DeviceItemData(
             displayName = "Your Awesome TV 1",
-            status = DeviceStatus.DISCONNECTED,
+            status = mutableStateOf(DeviceStatus.DISCONNECTED),
             isPoweredOn = true,
             connect = {}
         ),
         DeviceItemData(
             displayName = "Your Awesome TV 2",
-            status = DeviceStatus.CONNECTED,
+            status = mutableStateOf(DeviceStatus.CONNECTED),
             isPoweredOn = true,
             connect = {}
         ),
         DeviceItemData(
             displayName = "Your Awesome TV 3",
-            status = DeviceStatus.DISCONNECTED,
+            status = mutableStateOf(DeviceStatus.DISCONNECTED),
             isPoweredOn = false,
             connect = {}
         )
@@ -258,8 +260,8 @@ fun HasDevices(
             return@sortedWith when {
                 !device1.isPoweredOn -> 1
                 !device2.isPoweredOn -> -1
-                device1.status == DeviceStatus.CONNECTED -> -1
-                device2.status == DeviceStatus.CONNECTED -> 1
+                device1.status.value == DeviceStatus.CONNECTED -> -1
+                device2.status.value == DeviceStatus.CONNECTED -> 1
                 else -> 0
             }
         }.forEach {
@@ -279,7 +281,7 @@ fun DeviceItem(
     deviceData: DeviceItemData,
     navigateToController: () -> Unit
 ) {
-    val status = deviceData.status
+    val status by deviceData.status
 
     CButton(
         onClick = {
@@ -322,7 +324,7 @@ fun DeviceItem(
 
 data class DeviceItemData(
     val displayName: String,
-    val status: DeviceStatus,
+    val status: State<DeviceStatus>,
     val isPoweredOn: Boolean,
     val connect: () -> Unit,
 )
@@ -369,7 +371,6 @@ fun Ripple(animationValue: Float, brush: Brush) {
             .scale(animationValue)
             .clip(shape = CircleShape)
             .fillMaxSize()
-//            .size(size)
             .alpha(min(1F, (4F * (1F - animationValue)).pow(2)))
             .background(
                 brush = brush

@@ -8,9 +8,12 @@ import com.github.heroslender.lgtvcontroller.utils.sendSpecialKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class LgDevice(val device: ConnectableDevice) : Device {
+class LgDevice(
+    val device: ConnectableDevice,
+    status: DeviceStatus = DeviceStatus.DISCONNECTED,
+) : Device {
     private var _status: MutableStateFlow<DeviceStatus> =
-        MutableStateFlow(DeviceStatus.DISCONNECTED)
+        MutableStateFlow(status)
     override val status: StateFlow<DeviceStatus>
         get() = _status
 

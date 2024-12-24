@@ -65,6 +65,31 @@ class DeviceManager(
         }
     }
 
+    private fun getDevice(id: String): NetworkDevice? {
+        for (device in devices.value) {
+            if (device.id == id) {
+                return device
+            }
+        }
+
+        return null
+    }
+
+    fun onDeviceConnected(device: Device) {
+        val networkDevice = getDevice(device.id) ?: return
+        networkDevice.updateStatus(DeviceStatus.CONNECTED)
+    }
+
+    fun onDeviceDisconnected(device: Device) {
+        val networkDevice = getDevice(device.id) ?: return
+        networkDevice.updateStatus(DeviceStatus.DISCONNECTED)
+    }
+
+    fun onDevicePairing(device: Device) {
+        val networkDevice = getDevice(device.id) ?: return
+        networkDevice.updateStatus(DeviceStatus.PAIRING)
+    }
+
     fun setDeviceDisconnected() {
         _connectedDevice.tryEmit(null)
     }
@@ -133,7 +158,7 @@ class DeviceManager(
             return
         }
 
-        val device = LgDevice(cDevice)
+        val device = LgDevice(cDevice, DeviceStatus.CONNECTING)
         cDevice.addListener(DeviceListener(this, device))
         cDevice.connect()
 

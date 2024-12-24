@@ -14,12 +14,14 @@ class DeviceListener(
 
     override fun onDeviceReady(d: ConnectableDevice) {
         device.updateStatus(DeviceStatus.CONNECTED)
+        manager.onDeviceConnected(device)
         Log.d("Device", "listDevices :::: onDeviceReady")
     }
 
     override fun onDeviceDisconnected(d: ConnectableDevice) {
         Log.d("Device", "listDevices :::: onDeviceDisconnected")
         d.removeListener(this)
+        manager.onDeviceDisconnected(device)
         manager.setDeviceDisconnected()
         device.updateStatus(DeviceStatus.DISCONNECTED)
     }
@@ -30,6 +32,7 @@ class DeviceListener(
         pairingType: DeviceService.PairingType
     ) {
         Log.d("Device", "listDevices :::: onPairingRequired")
+        manager.onDevicePairing(device)
         device.updateStatus(DeviceStatus.PAIRING)
     }
 
