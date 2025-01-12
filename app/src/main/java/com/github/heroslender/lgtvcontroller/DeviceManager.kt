@@ -12,9 +12,9 @@ import com.connectsdk.service.command.ServiceCommandError
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceListener
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
+import com.github.heroslender.lgtvcontroller.device.NetworkDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgNetworkDevice
-import com.github.heroslender.lgtvcontroller.device.NetworkDevice
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -98,23 +98,27 @@ class DeviceManager(
         return getServiceByName(WebOSTVService.ID) != null
     }
 
+    private fun autoConnect(device: ConnectableDevice) {
+        if (hasConnected || !device.isCompatible()) {
+            return
+        }
+
+        scope.launch {
+            val favorite = prefs.settingsFlow.first().favoriteId
+            if (!hasConnected && favorite == device.id && device.isCompatible()) {
+                Log.d("Device_Manager", "Connecting to device favorite")
+                connect(device)
+            }
+        }
+    }
+
     override fun onDeviceAdded(manager: DiscoveryManager, device: ConnectableDevice) {
         Log.d(
             "Device_Manager",
             "onDeviceAdded :::: id: ${device.id} :: ${device.friendlyName}; ${device.modelNumber}"
         )
 
-        scope.launch {
-            val favorite = prefs.settingsFlow.first().favoriteId
-            if (!hasConnected
-                && connectedDevice.value == null
-                && favorite == device.id
-                && device.isCompatible()
-            ) {
-                Log.d("Device_Manager", "onDeviceAdded :::: Connecting to device favorite")
-                connect(device)
-            }
-        }
+        autoConnect(device)
 
         if (device.isCompatible()) {
             _devices.tryEmit(listOf(*devices.value.toTypedArray(), device.toNetworkDevice()))
@@ -124,17 +128,7 @@ class DeviceManager(
     override fun onDeviceUpdated(manager: DiscoveryManager, device: ConnectableDevice) {
         Log.d("Device_Manager", "onDeviceUpdated :::: ${device.friendlyName}")
 
-        scope.launch {
-            val favorite = prefs.settingsFlow.first().favoriteId
-            if (!hasConnected
-                && connectedDevice.value == null
-                && favorite == device.id
-                && device.isCompatible()
-            ) {
-                Log.d("Device_Manager", "onDeviceAdded :::: Connecting to device favorite")
-                connect(device)
-            }
-        }
+        autoConnect(device)
 
         if (device.isCompatible()) {
             val devices = devices.value.toTypedArray()
