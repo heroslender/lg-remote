@@ -27,11 +27,12 @@ import androidx.compose.ui.unit.em
 fun CTextButton(
     text: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     shape: Shape = ShapeDefaults.ExtraSmall,
     fontSize: TextUnit = 3.7.em,
     onClick: () -> Unit = {},
 ) {
-    CButton(shape = shape, modifier = modifier, onClick = onClick) {
+    CButton(enabled = enabled, shape = shape, modifier = modifier, onClick = onClick) {
         Text(text, fontSize = fontSize)
     }
 }
@@ -41,12 +42,13 @@ fun CIconButton(
     iconId: Int,
     contentDescription: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     shape: Shape = ShapeDefaults.ExtraSmall,
     useDefaultTint: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     val color = if (useDefaultTint) Color.Unspecified else null
-    CButton(shape = shape, modifier = modifier, onClick = onClick) {
+    CButton(enabled = enabled, shape = shape, modifier = modifier, onClick = onClick) {
         if (color == null) {
             Icon(painterResource(iconId), contentDescription, modifier = Modifier.size(32.dp))
         } else {
@@ -63,6 +65,7 @@ fun CIconButton(
 @Composable
 fun CButton(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     shape: Shape = ShapeDefaults.ExtraSmall,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     onClick: () -> Unit,
@@ -71,6 +74,7 @@ fun CButton(
 
     Button(
         onClick = onClick,
+        enabled = enabled,
         shape = shape,
         contentPadding = contentPadding,
         colors = ButtonColors(
@@ -86,13 +90,14 @@ fun CButton(
 
 @Composable
 fun RowScope.VerticalControls(
-    topButton: @Composable () -> Unit,
     centerText: String,
+    enabled: Boolean = true,
+    topButton: @Composable () -> Unit,
     bottomButton: @Composable () -> Unit,
 ) {
     Surface(
         shape = ShapeDefaults.ExtraSmall,
-        color = MaterialTheme.colorScheme.secondary,
+        color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier
             .fillMaxHeight()
             .weight(1F)

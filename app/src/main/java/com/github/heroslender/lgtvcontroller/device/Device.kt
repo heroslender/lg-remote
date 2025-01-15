@@ -9,6 +9,8 @@ interface Device {
 
     val status: Flow<DeviceStatus>
 
+    fun hasCapability(capability: String): Boolean
+
     fun powerOff()
 
     fun volumeUp()

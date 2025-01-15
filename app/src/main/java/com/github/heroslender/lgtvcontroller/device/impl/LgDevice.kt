@@ -26,6 +26,10 @@ class LgDevice(
     val service
         get() = device.getServiceByName(WebOSTVService.ID) as WebOSTVService
 
+    override fun hasCapability(capability: String): Boolean {
+        return device.hasCapability(capability)
+    }
+
     override fun powerOff() {
         service.powerOff(null)
         disconnect()

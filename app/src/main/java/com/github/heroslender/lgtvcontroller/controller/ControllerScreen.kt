@@ -28,6 +28,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.connectsdk.service.capability.ExternalInputControl
+import com.connectsdk.service.capability.KeyControl
+import com.connectsdk.service.capability.Launcher
+import com.connectsdk.service.capability.PowerControl
+import com.connectsdk.service.capability.TVControl
+import com.connectsdk.service.capability.VolumeControl
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
@@ -40,7 +46,7 @@ import kotlinx.coroutines.runBlocking
 @Preview(showBackground = true)
 @Composable
 fun ControlPreview(
-    isConnected: Boolean = false,
+    isConnected: Boolean = true,
     isFavorite: Boolean = false,
 ) {
     val device = if (isConnected) PreviewDevice else null
@@ -162,9 +168,10 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_power_24,
                 "Power",
+                enabled = device.hasCapability(PowerControl.Any),
                 modifier = Modifier
                     .weight(1F)
-                    .aspectRatio(1F, true)
+                    .aspectRatio(1F, true),
             ) {
                 device?.powerOff()
             }
@@ -172,6 +179,7 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_settings_24,
                 "Settings",
+                enabled = device.hasCapability(KeyControl.Any),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
@@ -193,6 +201,7 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_home_24,
                 "Home",
+                enabled = device.hasCapability(KeyControl.Home),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
@@ -204,6 +213,7 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_keyboard_arrow_up_24,
                 "Up",
+                enabled = device.hasCapability(KeyControl.Up),
                 shape = RoundedCornerShape(4.0.dp, 4.0.dp, 0.0.dp, 0.0.dp),
                 modifier = Modifier
                     .aspectRatio(1F, true)
@@ -213,7 +223,9 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CIconButton(
-                R.drawable.baseline_input_24, "Source",
+                R.drawable.baseline_input_24,
+                "Source",
+                enabled = device.hasCapability(ExternalInputControl.Any),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
@@ -230,6 +242,7 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_keyboard_arrow_left_24,
                 "Left",
+                enabled = device.hasCapability(KeyControl.Left),
                 shape = RoundedCornerShape(4.dp, 0.dp, 0.dp, 4.dp),
                 modifier = Modifier
                     .aspectRatio(1F, true)
@@ -241,6 +254,7 @@ fun ColumnScope.Controls(device: Device?) {
             CTextButton(
                 "OK",
                 shape = CutCornerShape(0.dp),
+                enabled = device.hasCapability(KeyControl.OK),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F),
@@ -251,6 +265,7 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_keyboard_arrow_right_24, "Right",
                 shape = RoundedCornerShape(0.dp, 4.dp, 4.dp, 0.dp),
+                enabled = device.hasCapability(KeyControl.Right),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F),
@@ -267,6 +282,7 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_arrow_back_24,
                 "Back",
+                enabled = device.hasCapability(KeyControl.Back),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
@@ -279,6 +295,7 @@ fun ColumnScope.Controls(device: Device?) {
                 R.drawable.baseline_keyboard_arrow_down_24,
                 "Down",
                 shape = RoundedCornerShape(0.dp, 0.dp, 4.dp, 4.dp),
+                enabled = device.hasCapability(KeyControl.Down),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F),
@@ -289,6 +306,7 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 R.drawable.netflix,
                 "Netflix",
+                enabled = device.hasCapability(Launcher.Netflix),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
@@ -303,15 +321,18 @@ fun ColumnScope.Controls(device: Device?) {
 
 @Composable
 fun RowScope.VolumeControls(device: Device?) {
+    val isEnabled = device.hasCapability(VolumeControl.Volume_Up_Down)
     VerticalControls(
         centerText = "VOL",
+        enabled = isEnabled,
         topButton = {
             CTextButton(
                 "+",
                 fontSize = 6.em,
+                enabled = isEnabled,
                 modifier = Modifier
                     .weight(1F)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
             ) {
                 device?.volumeUp()
             }
@@ -320,9 +341,10 @@ fun RowScope.VolumeControls(device: Device?) {
             CTextButton(
                 "-",
                 fontSize = 5.em,
+                enabled = isEnabled,
                 modifier = Modifier
                     .weight(1F)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
             ) {
                 device?.volumeDown()
             }
@@ -334,10 +356,12 @@ fun RowScope.VolumeControls(device: Device?) {
 fun RowScope.ChannelControls(device: Device?) {
     VerticalControls(
         centerText = "CH",
+        enabled =  device.hasCapability(TVControl.Channel_Up) || device.hasCapability(TVControl.Channel_Down),
         topButton = {
             CIconButton(
                 R.drawable.baseline_keyboard_arrow_up_24,
                 "Channel Up",
+                enabled =  device.hasCapability(TVControl.Channel_Up),
                 modifier = Modifier
                     .weight(1F)
                     .fillMaxWidth()
@@ -349,6 +373,7 @@ fun RowScope.ChannelControls(device: Device?) {
             CIconButton(
                 R.drawable.baseline_keyboard_arrow_down_24,
                 "Channel Down",
+                enabled =  device.hasCapability(TVControl.Channel_Down),
                 modifier = Modifier
                     .weight(1F)
                     .fillMaxWidth()
@@ -359,6 +384,8 @@ fun RowScope.ChannelControls(device: Device?) {
     )
 }
 
+fun Device?.hasCapability(capability: String) = this?.hasCapability(capability) ?: false
+
 object PreviewDevice : Device {
     override val id: String
         get() = "asddgres--sdfsdf-sdf"
@@ -367,6 +394,7 @@ object PreviewDevice : Device {
     override val status: Flow<DeviceStatus>
         get() = flowOf(DeviceStatus.CONNECTED)
 
+    override fun hasCapability(capability: String): Boolean = true
     override fun powerOff() {}
     override fun volumeUp() {}
     override fun volumeDown() {}
