@@ -83,6 +83,14 @@ class LgDevice(
         service.getExternalInputList(null)
     }
 
+    override fun menu() {
+        service.sendSpecialKey("MENU")
+    }
+
+    override fun qmenu() {
+        service.sendSpecialKey("QMENU")
+    }
+
     override fun launchNetflix() = launchApp("netflix")
 
     override fun launchApp(appId: String) {

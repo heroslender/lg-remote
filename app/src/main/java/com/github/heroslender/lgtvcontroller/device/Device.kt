@@ -37,6 +37,10 @@ interface Device {
 
     fun source()
 
+    fun menu()
+
+    fun qmenu()
+
     fun launchNetflix()
 
     fun launchApp(appId: String)

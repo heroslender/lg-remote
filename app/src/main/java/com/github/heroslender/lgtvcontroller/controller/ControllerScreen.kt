@@ -169,13 +169,14 @@ fun ColumnScope.Controls(device: Device?) {
                 device?.powerOff()
             }
 
-            CTextButton(
-                "INFO",
+            CIconButton(
+                R.drawable.baseline_settings_24,
+                "Settings",
                 modifier = Modifier
-                    .weight(1F)
                     .aspectRatio(1F, true)
+                    .weight(1F)
             ) {
-                device?.info()
+                device?.qmenu()
             }
         }
 
@@ -380,6 +381,8 @@ object PreviewDevice : Device {
     override fun home() {}
     override fun info() {}
     override fun source() {}
+    override fun menu() {}
+    override fun qmenu() {}
     override fun launchNetflix() {}
     override fun launchApp(appId: String) {}
     override fun disconnect() {}
