@@ -1,6 +1,6 @@
 [versions]
 agp = "8.7.1"
-connectSdkAndroidLite = "1.6.0"
+connectSdkAndroidLite = "2.1.2"
 datastore = "1.1.1"
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
@@ -29,7 +29,7 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx"
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 ksp-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 ksp-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomKtx" }
-connect-sdk-android-lite = { module = "com.connectsdk:connect-sdk-android-lite", version.ref = "connectSdkAndroidLite" }
+connect-sdk-android-lite = { module = "com.github.ConnectSDK:Connect-SDK-Android-Lite", version.ref = "connectSdkAndroidLite" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
