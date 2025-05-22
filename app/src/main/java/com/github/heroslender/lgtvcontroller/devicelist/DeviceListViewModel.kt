@@ -19,22 +19,10 @@ class DeviceListViewModel @Inject constructor(
         DeviceListUiState(
             devices = devices.map { device ->
                 DeviceItemData(
-                    displayName = device.friendlyName,
+                    displayName = device.displayName ?: device.friendlyName,
                     status = device.status,
                     isPoweredOn = true,
-                    connect = {
-                        val curr = deviceManager.connectedDevice.value
-                        if (curr != null) {
-                            if (curr.id == device.id) {
-                                // Already connected to this
-                                return@DeviceItemData
-                            }
-
-                            curr.disconnect()
-                        }
-
-                        device.connect()
-                    }
+                    connect = device::connect
                 )
             }
         )

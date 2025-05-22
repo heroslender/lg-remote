@@ -9,14 +9,14 @@ plugins {
 
 android {
     namespace = "com.github.heroslender.lgtvcontroller"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.github.heroslender.lgtvcontroller"
         minSdk = 30
         targetSdk = 34
         versionCode = 3
-        versionName = "0.2.1"
+        versionName = "0.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons)
 
     implementation(libs.androidx.datastore)
     implementation(libs.protobuf.javalite)
@@ -67,6 +68,7 @@ dependencies {
 
     // Room
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
     ksp(libs.ksp.androidx.room.compiler)
 
     testImplementation(libs.junit)

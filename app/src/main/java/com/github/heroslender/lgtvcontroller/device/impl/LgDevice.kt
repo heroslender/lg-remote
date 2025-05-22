@@ -1,6 +1,5 @@
 package com.github.heroslender.lgtvcontroller.device.impl
 
-import com.connectsdk.device.ConnectableDevice
 import com.connectsdk.service.WebOSTVService
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
@@ -9,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class LgDevice(
-    val device: ConnectableDevice,
+    val device: LgNetworkDevice,
     status: DeviceStatus = DeviceStatus.DISCONNECTED,
 ) : Device {
     private var _status: MutableStateFlow<DeviceStatus> =
@@ -23,11 +22,14 @@ class LgDevice(
     override val friendlyName: String
         get() = device.friendlyName
 
+    override val displayName: String?
+        get() = device.displayName
+
     val service
-        get() = device.getServiceByName(WebOSTVService.ID) as WebOSTVService
+        get() = device.device.getServiceByName(WebOSTVService.ID) as WebOSTVService
 
     override fun hasCapability(capability: String): Boolean {
-        return device.hasCapability(capability)
+        return device.device.hasCapability(capability)
     }
 
     override fun powerOff() {
@@ -102,7 +104,7 @@ class LgDevice(
     }
 
     override fun disconnect() {
-        device.disconnect()
+        device.device.disconnect()
     }
 
     override fun updateStatus(status: DeviceStatus) {

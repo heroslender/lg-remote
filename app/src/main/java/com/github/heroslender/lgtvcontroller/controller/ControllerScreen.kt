@@ -7,14 +7,19 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons.Filled
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,10 +72,11 @@ fun ControlPreview(
         ) {
             Header(
                 deviceName = controllerUiState.deviceName,
-                deviceStatus = controllerUiState.deviceStatus.name,
+                deviceStatus = controllerUiState.deviceStatus,
                 isFavorite = controllerUiState.isFavorite,
                 onFavouriteToggle = { },
                 navigateToDeviceList = { },
+                navigateToEditDevice = { },
             )
 
             Controls(controllerUiState.device)
@@ -82,6 +88,7 @@ fun ControlPreview(
 fun ControllerScreen(
     controllerViewModel: ControllerViewModel = hiltViewModel(),
     navigateToDeviceList: () -> Unit,
+    navigateToEditDevice: (String) -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -92,10 +99,11 @@ fun ControllerScreen(
         val controllerUiState by controllerViewModel.uiState.collectAsState()
         Header(
             deviceName = controllerUiState.deviceName,
-            deviceStatus = controllerUiState.deviceStatus.name,
+            deviceStatus = controllerUiState.deviceStatus,
             isFavorite = controllerUiState.isFavorite,
             onFavouriteToggle = { controllerViewModel.setFavorite(!controllerUiState.isFavorite) },
             navigateToDeviceList = navigateToDeviceList,
+            navigateToEditDevice = { controllerUiState.device?.id?.also { navigateToEditDevice(it) } },
         )
 
         Controls(controllerUiState.device)
@@ -105,10 +113,11 @@ fun ControllerScreen(
 @Composable
 fun Header(
     deviceName: String?,
-    deviceStatus: String,
+    deviceStatus: DeviceStatus,
     isFavorite: Boolean,
     onFavouriteToggle: () -> Unit,
     navigateToDeviceList: () -> Unit,
+    navigateToEditDevice: () -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.Center,
@@ -127,24 +136,37 @@ fun Header(
                 Text("Disconnected")
             } else {
                 Text(deviceName)
-                Text(deviceStatus)
+                Text(deviceStatus.name)
             }
         }
 
-        if (deviceName != null) {
-            Icon(
-                painterResource(if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
-                "Favorite",
-                modifier = Modifier
-                    .layout { measurable, constraints ->
-                        val placeable = measurable.measure(constraints)
-                        layout(0, 0) { placeable.place(0, 0) }
-                    }
-                    .fillMaxHeight()
-                    .aspectRatio(1F, true)
-                    .padding(10.dp)
-                    .clickable(onClick = onFavouriteToggle)
-            )
+        if (deviceName != null && deviceStatus == DeviceStatus.CONNECTED) {
+            Row(modifier = Modifier
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(16, 16) { placeable.place(0, 0) }
+                }
+                .fillMaxHeight()) {
+                Icon(
+                    painterResource(if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
+                    "Favorite",
+                    modifier = Modifier
+//                        .padding(start = 10.dp)
+                        .fillMaxHeight()
+                        .aspectRatio(1F, true)
+                        .padding(10.dp)
+                        .clickable(onClick = onFavouriteToggle)
+                )
+                Icon(
+                    imageVector = Filled.Edit,
+                    "Settings",
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1F, true)
+                        .padding(10.dp)
+                        .clickable(onClick = navigateToEditDevice)
+                )
+            }
         }
     }
 }
@@ -387,12 +409,10 @@ fun RowScope.ChannelControls(device: Device?) {
 fun Device?.hasCapability(capability: String) = this?.hasCapability(capability) ?: false
 
 object PreviewDevice : Device {
-    override val id: String
-        get() = "asddgres--sdfsdf-sdf"
-    override val friendlyName: String
-        get() = "Your Awesome TV"
-    override val status: Flow<DeviceStatus>
-        get() = flowOf(DeviceStatus.CONNECTED)
+    override val id: String = "asddgres--sdfsdf-sdf"
+    override val friendlyName: String = "Your Awesome TV"
+    override val displayName: String? = null
+    override val status: Flow<DeviceStatus> = flowOf(DeviceStatus.CONNECTED)
 
     override fun hasCapability(capability: String): Boolean = true
     override fun powerOff() {}

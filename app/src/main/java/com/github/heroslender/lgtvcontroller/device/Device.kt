@@ -6,6 +6,7 @@ interface Device {
     val id: String
 
     val friendlyName: String
+    val displayName: String?
 
     val status: Flow<DeviceStatus>
 

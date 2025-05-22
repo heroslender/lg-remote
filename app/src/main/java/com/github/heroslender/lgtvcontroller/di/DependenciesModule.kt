@@ -10,6 +10,9 @@ import com.github.heroslender.lgtvcontroller.Settings
 import com.github.heroslender.lgtvcontroller.settings.DATA_STORE_FILE_NAME
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import com.github.heroslender.lgtvcontroller.settings.SettingsSerializer
+import com.github.heroslender.lgtvcontroller.storage.OfflineTvRepository
+import com.github.heroslender.lgtvcontroller.storage.TvDatabase
+import com.github.heroslender.lgtvcontroller.storage.TvRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -61,7 +64,23 @@ object DependenciesModule {
         @ApplicationContext ctx: Context,
         coroutineScope: CoroutineScope,
         settingsRepository: SettingsRepository,
+        tvRepository: TvRepository,
     ): DeviceManager {
-        return DeviceManager(ctx, coroutineScope, settingsRepository)
+        return DeviceManager(ctx, coroutineScope, settingsRepository, tvRepository)
+    }
+
+    @Singleton
+    @Provides
+    fun provideTvDatabase(
+        @ApplicationContext ctx: Context,
+    ): TvDatabase {
+        return TvDatabase.getDatabase(ctx)
+    }
+
+    @Provides
+    fun providesTvRepository(
+        tvDatabase: TvDatabase,
+    ): TvRepository {
+        return OfflineTvRepository(tvDatabase.tvDao())
     }
 }

@@ -16,6 +16,8 @@ import com.github.heroslender.lgtvcontroller.device.NetworkDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgNetworkDevice
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
+import com.github.heroslender.lgtvcontroller.storage.Tv
+import com.github.heroslender.lgtvcontroller.storage.TvRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,9 +28,10 @@ import kotlinx.coroutines.launch
 class DeviceManager(
     ctx: Context,
     private val scope: CoroutineScope,
-    private val prefs: SettingsRepository
+    private val prefs: SettingsRepository,
+    private val tvRepository: TvRepository,
 ) : DiscoveryManagerListener {
-    private var _connectedDevice: MutableStateFlow<Device?> = MutableStateFlow(null)
+    private var _connectedDevice: MutableStateFlow<LgDevice?> = MutableStateFlow(null)
     val connectedDevice: StateFlow<Device?>
         get() = _connectedDevice
 
@@ -83,6 +86,11 @@ class DeviceManager(
     fun onDeviceDisconnected(device: Device) {
         val networkDevice = getDevice(device.id) ?: return
         networkDevice.updateStatus(DeviceStatus.DISCONNECTED)
+
+        val dev = _connectedDevice.value ?: return
+        if (!dev.device.device.isConnecting) {
+            _connectedDevice.tryEmit(null)
+        }
     }
 
     fun onDevicePairing(device: Device) {
@@ -90,15 +98,91 @@ class DeviceManager(
         networkDevice.updateStatus(DeviceStatus.PAIRING)
     }
 
-    fun setDeviceDisconnected() {
-        _connectedDevice.tryEmit(null)
-    }
-
     fun ConnectableDevice.isCompatible(): Boolean {
         return getServiceByName(WebOSTVService.ID) != null
     }
 
-    private fun autoConnect(device: ConnectableDevice) {
+    fun LgNetworkDevice.isCompatible() = device.isCompatible()
+
+    override fun onDeviceAdded(manager: DiscoveryManager, device: ConnectableDevice) {
+        Log.d(
+            "Device_Manager",
+            "onDeviceAdded :::: id: ${device.id} :: ${device.friendlyName}; ${device.modelNumber}"
+        )
+
+        if (device.isCompatible()) {
+            deviceFound(device)
+        }
+    }
+
+    override fun onDeviceUpdated(manager: DiscoveryManager, device: ConnectableDevice) {
+        Log.d("Device_Manager", "onDeviceUpdated :::: ${device.friendlyName}")
+
+        if (device.isCompatible() && devices.value.indexOfFirst { it.id == device.id } == -1) {
+            deviceFound(device)
+        }
+    }
+
+    override fun onDeviceRemoved(manager: DiscoveryManager, device: ConnectableDevice) {
+        Log.d("Device_Manager", "onDeviceRemoved :::: ${device.friendlyName}")
+        _devices.tryEmit(devices.value.toMutableList().apply { removeIf { it.id == device.id } })
+    }
+
+    override fun onDiscoveryFailed(manager: DiscoveryManager, error: ServiceCommandError) {
+        Log.d("Device_Manager", "onDiscoveryFailed :::: ${error.message}")
+    }
+
+    fun deviceFound(device: ConnectableDevice) {
+        scope.launch {
+            val tv = try {
+                tvRepository
+                    .getTvStream(device.id)
+                    .first()
+            } catch (_: IllegalStateException) {
+                Log.d("DeviceManager", "Device not found in database")
+                null
+            }
+
+            val networkDevice = LgNetworkDevice(
+                device = device,
+                tv = tv,
+                manager = this@DeviceManager,
+            )
+
+            _devices.tryEmit(listOf(*devices.value.toTypedArray(), networkDevice))
+
+            autoConnect(networkDevice)
+        }
+    }
+
+    fun connect(cDevice: LgNetworkDevice) {
+        if (cDevice.device.getServiceByName(WebOSTVService.ID) == null) {
+            return
+        }
+
+        val currDevice = connectedDevice.value
+        if (currDevice != null) {
+            if (currDevice.id == cDevice.id) {
+                // Already connected to this device
+                return
+            }
+
+            currDevice.disconnect()
+        }
+
+        val device = LgDevice(cDevice, DeviceStatus.CONNECTING)
+        cDevice.device.addListener(DeviceListener(this, device))
+        cDevice.device.connect()
+
+        _connectedDevice.value = device
+        hasConnected = true
+
+        scope.launch {
+            tvRepository.insertTv(Tv(device.id, device.friendlyName, ""))
+        }
+    }
+
+    private fun autoConnect(device: LgNetworkDevice) {
         if (hasConnected || !device.isCompatible()) {
             return
         }
@@ -112,62 +196,7 @@ class DeviceManager(
         }
     }
 
-    override fun onDeviceAdded(manager: DiscoveryManager, device: ConnectableDevice) {
-        Log.d(
-            "Device_Manager",
-            "onDeviceAdded :::: id: ${device.id} :: ${device.friendlyName}; ${device.modelNumber}"
-        )
-
-        autoConnect(device)
-
-        if (device.isCompatible()) {
-            _devices.tryEmit(listOf(*devices.value.toTypedArray(), device.toNetworkDevice()))
-        }
-    }
-
-    override fun onDeviceUpdated(manager: DiscoveryManager, device: ConnectableDevice) {
-        Log.d("Device_Manager", "onDeviceUpdated :::: ${device.friendlyName}")
-
-        autoConnect(device)
-
-        if (device.isCompatible()) {
-            val devices = devices.value.toTypedArray()
-            if (devices.indexOfFirst { it.id == device.id } == -1) {
-                _devices.tryEmit(listOf(*devices, device.toNetworkDevice()))
-            }
-        }
-    }
-
-    override fun onDeviceRemoved(manager: DiscoveryManager, device: ConnectableDevice) {
-        Log.d("Device_Manager", "onDeviceRemoved :::: ${device.friendlyName}")
-        _devices.tryEmit(devices.value.toMutableList().apply { removeIf { it.id == device.id } })
-    }
-
-    override fun onDiscoveryFailed(manager: DiscoveryManager, error: ServiceCommandError) {
-        Log.d("Device_Manager", "onDiscoveryFailed :::: ${error.message}")
-    }
-
-    fun connect(cDevice: ConnectableDevice) {
-        if (cDevice.getServiceByName(WebOSTVService.ID) == null) {
-            return
-        }
-
-        val device = LgDevice(cDevice, DeviceStatus.CONNECTING)
-        cDevice.addListener(DeviceListener(this, device))
-        cDevice.connect()
-
-        _connectedDevice.value = device
-        hasConnected = true
-    }
-
-    private fun ConnectableDevice.toNetworkDevice(): NetworkDevice {
-        return LgNetworkDevice(
-            id = id,
-            friendlyName = friendlyName,
-            status = if (isConnected) DeviceStatus.CONNECTED else DeviceStatus.DISCONNECTED,
-            connectToDevice = {
-                connect(this)
-            }
-        )
+    fun tvUpdated(tv: Tv) {
+        devices.value.first { it.id == tv.id }.displayName = tv.displayName
     }
 }

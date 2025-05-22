@@ -315,7 +315,7 @@ fun DeviceItem(
                 else if (status == DeviceStatus.DISCONNECTED)
                     "Connect"
                 else
-                    "Disconnect"
+                    "Connected"
                 Text(subText)
             }
         }

@@ -22,7 +22,6 @@ class DeviceListener(
         Log.d("Device", "listDevices :::: onDeviceDisconnected")
         d.removeListener(this)
         manager.onDeviceDisconnected(device)
-        manager.setDeviceDisconnected()
         device.updateStatus(DeviceStatus.DISCONNECTED)
     }
 

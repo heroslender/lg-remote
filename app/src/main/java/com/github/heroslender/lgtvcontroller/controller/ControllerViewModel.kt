@@ -31,7 +31,7 @@ class ControllerViewModel @Inject constructor(
             ) { deviceStatus, settings ->
                 ControllerUiState(
                     device = device,
-                    deviceName = device.friendlyName,
+                    deviceName = device.displayName ?: device.friendlyName,
                     deviceStatus = deviceStatus,
                     isFavorite = device.id == settings.favoriteId
                 )
