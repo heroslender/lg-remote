@@ -1,4 +1,4 @@
-package com.github.heroslender.lgtvcontroller.controller
+package com.github.heroslender.lgtvcontroller.ui.controller
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

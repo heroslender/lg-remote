@@ -1,4 +1,4 @@
-package com.github.heroslender.lgtvcontroller.controller
+package com.github.heroslender.lgtvcontroller.ui.controller
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,18 +7,15 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons.Filled
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -29,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -40,6 +38,7 @@ import com.connectsdk.service.capability.PowerControl
 import com.connectsdk.service.capability.TVControl
 import com.connectsdk.service.capability.VolumeControl
 import com.github.heroslender.lgtvcontroller.R
+import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
@@ -132,8 +131,8 @@ fun Header(
             }
         ) {
             if (deviceName == null) {
-                Text("Device")
-                Text("Disconnected")
+                Text(stringResource(string.controller_device))
+                Text(stringResource(string.controller_disconnected))
             } else {
                 Text(deviceName)
                 Text(deviceStatus.name)
@@ -148,10 +147,9 @@ fun Header(
                 }
                 .fillMaxHeight()) {
                 Icon(
-                    painterResource(if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
-                    "Favorite",
+                    painter = painterResource(if (isFavorite) R.drawable.baseline_star_24 else R.drawable.baseline_star_border_24),
+                    contentDescription = stringResource(string.favorite_button),
                     modifier = Modifier
-//                        .padding(start = 10.dp)
                         .fillMaxHeight()
                         .aspectRatio(1F, true)
                         .padding(10.dp)
@@ -159,7 +157,7 @@ fun Header(
                 )
                 Icon(
                     imageVector = Filled.Edit,
-                    "Settings",
+                    contentDescription = stringResource(string.edit_button),
                     modifier = Modifier
                         .fillMaxHeight()
                         .aspectRatio(1F, true)
@@ -188,8 +186,8 @@ fun ColumnScope.Controls(device: Device?) {
                 .weight(1F)
         ) {
             CIconButton(
-                R.drawable.baseline_power_24,
-                "Power",
+                iconId = R.drawable.baseline_power_24,
+                contentDescription = stringResource(string.power_button),
                 enabled = device.hasCapability(PowerControl.Any),
                 modifier = Modifier
                     .weight(1F)
@@ -199,8 +197,8 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CIconButton(
-                R.drawable.baseline_settings_24,
-                "Settings",
+                iconId = R.drawable.baseline_settings_24,
+                contentDescription = stringResource(string.settings_button),
                 enabled = device.hasCapability(KeyControl.Any),
                 modifier = Modifier
                     .aspectRatio(1F, true)
@@ -221,8 +219,8 @@ fun ColumnScope.Controls(device: Device?) {
                 .fillMaxWidth()
         ) {
             CIconButton(
-                R.drawable.baseline_home_24,
-                "Home",
+                iconId = R.drawable.baseline_home_24,
+                contentDescription = stringResource(string.home_button),
                 enabled = device.hasCapability(KeyControl.Home),
                 modifier = Modifier
                     .aspectRatio(1F, true)
@@ -233,8 +231,8 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CIconButton(
-                R.drawable.baseline_keyboard_arrow_up_24,
-                "Up",
+                iconId = R.drawable.baseline_keyboard_arrow_up_24,
+                contentDescription = stringResource(string.up_button),
                 enabled = device.hasCapability(KeyControl.Up),
                 shape = RoundedCornerShape(4.0.dp, 4.0.dp, 0.0.dp, 0.0.dp),
                 modifier = Modifier
@@ -245,8 +243,8 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CIconButton(
-                R.drawable.baseline_input_24,
-                "Source",
+                iconId = R.drawable.baseline_input_24,
+                contentDescription = stringResource(string.source_button),
                 enabled = device.hasCapability(ExternalInputControl.Any),
                 modifier = Modifier
                     .aspectRatio(1F, true)
@@ -262,8 +260,8 @@ fun ColumnScope.Controls(device: Device?) {
                 .fillMaxWidth()
         ) {
             CIconButton(
-                R.drawable.baseline_keyboard_arrow_left_24,
-                "Left",
+                iconId = R.drawable.baseline_keyboard_arrow_left_24,
+                contentDescription = stringResource(string.left_button),
                 enabled = device.hasCapability(KeyControl.Left),
                 shape = RoundedCornerShape(4.dp, 0.dp, 0.dp, 4.dp),
                 modifier = Modifier
@@ -274,7 +272,7 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CTextButton(
-                "OK",
+                text = stringResource(string.ok_button),
                 shape = CutCornerShape(0.dp),
                 enabled = device.hasCapability(KeyControl.OK),
                 modifier = Modifier
@@ -285,7 +283,8 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CIconButton(
-                R.drawable.baseline_keyboard_arrow_right_24, "Right",
+                iconId = R.drawable.baseline_keyboard_arrow_right_24,
+                contentDescription = stringResource(string.right_button),
                 shape = RoundedCornerShape(0.dp, 4.dp, 4.dp, 0.dp),
                 enabled = device.hasCapability(KeyControl.Right),
                 modifier = Modifier
@@ -302,8 +301,8 @@ fun ColumnScope.Controls(device: Device?) {
                 .fillMaxWidth()
         ) {
             CIconButton(
-                R.drawable.baseline_arrow_back_24,
-                "Back",
+                iconId = R.drawable.baseline_arrow_back_24,
+                contentDescription = stringResource(string.back_button),
                 enabled = device.hasCapability(KeyControl.Back),
                 modifier = Modifier
                     .aspectRatio(1F, true)
@@ -314,8 +313,8 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CIconButton(
-                R.drawable.baseline_keyboard_arrow_down_24,
-                "Down",
+                iconId = R.drawable.baseline_keyboard_arrow_down_24,
+                contentDescription = stringResource(string.down_button),
                 shape = RoundedCornerShape(0.dp, 0.dp, 4.dp, 4.dp),
                 enabled = device.hasCapability(KeyControl.Down),
                 modifier = Modifier
@@ -326,8 +325,8 @@ fun ColumnScope.Controls(device: Device?) {
             }
 
             CIconButton(
-                R.drawable.netflix,
-                "Netflix",
+                iconId = R.drawable.netflix,
+                contentDescription = stringResource(string.netflix_button),
                 enabled = device.hasCapability(Launcher.Netflix),
                 modifier = Modifier
                     .aspectRatio(1F, true)
@@ -345,11 +344,11 @@ fun ColumnScope.Controls(device: Device?) {
 fun RowScope.VolumeControls(device: Device?) {
     val isEnabled = device.hasCapability(VolumeControl.Volume_Up_Down)
     VerticalControls(
-        centerText = "VOL",
+        centerText = stringResource(string.volume_controls),
         enabled = isEnabled,
         topButton = {
             CTextButton(
-                "+",
+                text = stringResource(string.volume_up_button),
                 fontSize = 6.em,
                 enabled = isEnabled,
                 modifier = Modifier
@@ -361,7 +360,7 @@ fun RowScope.VolumeControls(device: Device?) {
         },
         bottomButton = {
             CTextButton(
-                "-",
+                text = stringResource(string.volume_down_button),
                 fontSize = 5.em,
                 enabled = isEnabled,
                 modifier = Modifier
@@ -377,13 +376,13 @@ fun RowScope.VolumeControls(device: Device?) {
 @Composable
 fun RowScope.ChannelControls(device: Device?) {
     VerticalControls(
-        centerText = "CH",
+        centerText = stringResource(string.channel_controls),
         enabled =  device.hasCapability(TVControl.Channel_Up) || device.hasCapability(TVControl.Channel_Down),
         topButton = {
             CIconButton(
-                R.drawable.baseline_keyboard_arrow_up_24,
-                "Channel Up",
-                enabled =  device.hasCapability(TVControl.Channel_Up),
+                iconId = R.drawable.baseline_keyboard_arrow_up_24,
+                contentDescription = stringResource(string.channel_up_button),
+                enabled = device.hasCapability(TVControl.Channel_Up),
                 modifier = Modifier
                     .weight(1F)
                     .fillMaxWidth()
@@ -393,9 +392,9 @@ fun RowScope.ChannelControls(device: Device?) {
         },
         bottomButton = {
             CIconButton(
-                R.drawable.baseline_keyboard_arrow_down_24,
-                "Channel Down",
-                enabled =  device.hasCapability(TVControl.Channel_Down),
+                iconId = R.drawable.baseline_keyboard_arrow_down_24,
+                contentDescription = stringResource(string.channel_down_button),
+                enabled = device.hasCapability(TVControl.Channel_Down),
                 modifier = Modifier
                     .weight(1F)
                     .fillMaxWidth()

@@ -1,4 +1,4 @@
-package com.github.heroslender.lgtvcontroller.editor
+package com.github.heroslender.lgtvcontroller.ui.editor
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -6,11 +6,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.util.copy
 import com.github.heroslender.lgtvcontroller.DeviceManager
-import com.github.heroslender.lgtvcontroller.NavDest
 import com.github.heroslender.lgtvcontroller.storage.Tv
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
+import com.github.heroslender.lgtvcontroller.ui.navigation.NavDest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

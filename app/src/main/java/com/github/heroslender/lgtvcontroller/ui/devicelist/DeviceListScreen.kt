@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSharedTransitionApi::class)
 
-package com.github.heroslender.lgtvcontroller.devicelist
+package com.github.heroslender.lgtvcontroller.ui.devicelist
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
@@ -47,11 +47,13 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.R
-import com.github.heroslender.lgtvcontroller.controller.CButton
+import com.github.heroslender.lgtvcontroller.R.string
+import com.github.heroslender.lgtvcontroller.ui.controller.CButton
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlin.math.min
@@ -169,7 +171,7 @@ fun NoDevices(
     ) {
         with(sharedTransitionScope) {
             Text(
-                "Searching for devices",
+                text = stringResource(string.searching_devices),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .sharedBounds(
@@ -178,7 +180,7 @@ fun NoDevices(
                     )
             )
             Text(
-                "Make sure you're connected to the same network",
+                text = stringResource(string.check_network),
                 style = MaterialTheme.typography.bodyMedium, modifier = Modifier
                     .sharedBounds(
                         rememberSharedContentState(key = "txt_h2"),
@@ -216,7 +218,7 @@ fun HasDevices(
         ) {
             Icon(
                 painterResource(R.drawable.baseline_close_24),
-                contentDescription = "back",
+                contentDescription = stringResource(string.back_button),
             )
         }
 
@@ -227,7 +229,8 @@ fun HasDevices(
             with(sharedTransitionScope) {
                 Column(Modifier.weight(1F)) {
                     Text(
-                        "Searching for devices", style = MaterialTheme.typography.titleMedium,
+                        text = stringResource(string.searching_devices),
+                        style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier
                             .sharedBounds(
                                 rememberSharedContentState(key = "txt_h1"),
@@ -235,7 +238,7 @@ fun HasDevices(
                             )
                     )
                     Text(
-                        "Make sure you're connected to the same network",
+                        text = stringResource(string.check_network),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
                             .sharedBounds(
@@ -301,7 +304,7 @@ fun DeviceItem(
                     if (status != DeviceStatus.DISCONNECTED) R.drawable.baseline_connected_tv_24
                     else R.drawable.baseline_tv_24
                 ),
-                "contentDescription",
+                contentDescription = "contentDescription",
                 modifier = Modifier
                     .size(32.dp)
                     .align(Alignment.CenterVertically),
@@ -311,11 +314,11 @@ fun DeviceItem(
             Column(modifier = Modifier.padding(start = 15.dp)) {
                 Text(deviceData.displayName)
                 val subText = if (!deviceData.isPoweredOn)
-                    "Offline"
+                    stringResource(string.device_list_offline)
                 else if (status == DeviceStatus.DISCONNECTED)
-                    "Connect"
+                    stringResource(string.device_list_disconnected)
                 else
-                    "Connected"
+                    stringResource(string.device_list_connected)
                 Text(subText)
             }
         }

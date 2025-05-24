@@ -1,3 +1,34 @@
 <resources>
     <string name="app_name">LG TV Controller</string>
+    <string name="back_button">Back</string>
+    <string name="favorite_button">Favorite</string>
+    <string name="edit_button">Edit</string>
+    <string name="power_button">Power</string>
+    <string name="settings_button">Settings</string>
+    <string name="home_button">Home</string>
+    <string name="up_button">Up</string>
+    <string name="down_button">Down</string>
+    <string name="left_button">Left</string>
+    <string name="right_button">Right</string>
+    <string name="ok_button">Ok</string>
+    <string name="netflix_button">Netflix</string>
+    <string name="volume_controls">VOL</string>
+    <string name="volume_up_button">+</string>
+    <string name="volume_down_button">-</string>
+    <string name="channel_controls">CH</string>
+    <string name="channel_up_button">Channel Up</string>
+    <string name="channel_down_button">Channel Down</string>
+    <string name="source_button">Source</string>
+    <string name="save_action">Save</string>
+    <string name="edit_tv_title">Edit TV</string>
+    <string name="tv_id">ID</string>
+    <string name="tv_name">Name</string>
+    <string name="tv_display_name">Display Name</string>
+    <string name="searching_devices">Searching for devices</string>
+    <string name="check_network">Make sure you\'re connected to the same network</string>
+    <string name="device_list_offline">Offline</string>
+    <string name="device_list_disconnected">Connect</string>
+    <string name="device_list_connected">Connected</string>
+    <string name="controller_device">Device</string>
+    <string name="controller_disconnected">Disconnected</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.github.heroslender.lgtvcontroller.devicelist
+package com.github.heroslender.lgtvcontroller.ui.devicelist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

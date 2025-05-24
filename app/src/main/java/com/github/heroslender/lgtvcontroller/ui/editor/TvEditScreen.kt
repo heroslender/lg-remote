@@ -1,4 +1,4 @@
-package com.github.heroslender.lgtvcontroller.editor
+package com.github.heroslender.lgtvcontroller.ui.editor
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,9 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlinx.coroutines.launch
 
@@ -81,13 +83,13 @@ fun TvEditScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Edit TV") },
+                title = { Text(stringResource(string.edit_tv_title)) },
                 windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp),
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
                         Icon(
                             imageVector = Filled.ArrowBack,
-                            contentDescription = "Return"
+                            contentDescription = stringResource(string.back_button)
                         )
                     }
                 })
@@ -134,7 +136,7 @@ fun TvEditBody(
                 .fillMaxWidth()
                 .padding(top = 10.dp)
         ) {
-            Text("Save")
+            Text(stringResource(string.save_action))
         }
     }
 }
@@ -148,7 +150,7 @@ fun TvEditForm(
         OutlinedTextField(
             value = tvDetails.tvId,
             onValueChange = {},
-            label = { Text("ID") },
+            label = { Text(stringResource(string.tv_id)) },
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             singleLine = true,
@@ -157,7 +159,7 @@ fun TvEditForm(
         OutlinedTextField(
             value = tvDetails.tvName,
             onValueChange = {},
-            label = { Text("Name") },
+            label = { Text(stringResource(string.tv_name)) },
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             singleLine = true,
@@ -166,7 +168,7 @@ fun TvEditForm(
         OutlinedTextField(
             value = tvDetails.tvDisplayName,
             onValueChange = { onValueChange(tvDetails.copy(tvDisplayName = it)) },
-            label = { Text("Display Name") },
+            label = { Text(stringResource(string.tv_display_name)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = true,
             singleLine = true,
