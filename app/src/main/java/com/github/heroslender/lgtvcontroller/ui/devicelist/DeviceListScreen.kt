@@ -53,8 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
-import com.github.heroslender.lgtvcontroller.ui.controller.CButton
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
+import com.github.heroslender.lgtvcontroller.ui.controller.CButton
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlin.math.min
 import kotlin.math.pow
@@ -68,7 +68,7 @@ import kotlin.math.pow
 fun PreviewDeviceList() {
     LGTVControllerTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            SharedTransitionLayout {
+            SharedTransitionLayout(modifier = Modifier.padding(innerPadding)) {
                 AnimatedContent(true, label = "found devices transition") { _ ->
                     NoDevices(
                         animatedVisibilityScope = this@AnimatedContent,
@@ -111,7 +111,7 @@ fun PreviewDeviceListFound() {
 
     LGTVControllerTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            SharedTransitionLayout {
+            SharedTransitionLayout(modifier = Modifier.padding(innerPadding)) {
                 AnimatedContent(true, label = "found devices transition") { _ ->
                     HasDevices(
                         devices,
@@ -135,23 +135,25 @@ fun DeviceListScreen(
         navigateToController()
     }
 
-    SharedTransitionLayout {
-        AnimatedContent(
-            devices.devices.isNotEmpty(),
-            label = "found devices transition"
-        ) { hasDevices ->
-            if (!hasDevices) {
-                NoDevices(
-                    animatedVisibilityScope = this@AnimatedContent,
-                    sharedTransitionScope = this@SharedTransitionLayout
-                )
-            } else {
-                HasDevices(
-                    devices.devices,
-                    navigateToController,
-                    animatedVisibilityScope = this@AnimatedContent,
-                    sharedTransitionScope = this@SharedTransitionLayout
-                )
+    Scaffold { innerPadding ->
+        SharedTransitionLayout(modifier = Modifier.padding(innerPadding)) {
+            AnimatedContent(
+                devices.devices.isNotEmpty(),
+                label = "found devices transition"
+            ) { hasDevices ->
+                if (!hasDevices) {
+                    NoDevices(
+                        animatedVisibilityScope = this@AnimatedContent,
+                        sharedTransitionScope = this@SharedTransitionLayout
+                    )
+                } else {
+                    HasDevices(
+                        devices.devices,
+                        navigateToController,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        sharedTransitionScope = this@SharedTransitionLayout
+                    )
+                }
             }
         }
     }
@@ -209,7 +211,7 @@ fun HasDevices(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp)
+            .padding(horizontal = 32.dp, vertical = 16.dp)
     ) {
         SmallFloatingActionButton(
             onClick = { navigateToController() },
@@ -223,7 +225,7 @@ fun HasDevices(
         }
 
         Row(
-            Modifier.height(IntrinsicSize.Min),
+            Modifier.padding(top = 8.dp).height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically
         ) {
             with(sharedTransitionScope) {

@@ -19,7 +19,7 @@ class DeviceListViewModel @Inject constructor(
         DeviceListUiState(
             devices = devices.map { device ->
                 DeviceItemData(
-                    displayName = device.displayName ?: device.friendlyName,
+                    displayName = if (device.displayName.isNullOrEmpty()) device.friendlyName else device.displayName!!,
                     status = device.status,
                     isPoweredOn = true,
                     connect = device::connect

@@ -45,6 +45,11 @@ class LgDevice(
         service.volumeDown()
     }
 
+    override fun mute() {
+//        service.setMute(true, null)
+        service.sendSpecialKey("MUTE")
+    }
+
     override fun channelUp() {
         service.channelUp()
     }
@@ -75,6 +80,10 @@ class LgDevice(
 
     override fun back() {
         service.keyControl.back(null)
+    }
+
+    override fun exit() {
+        service.sendSpecialKey("EXIT")
     }
 
     override fun home() {

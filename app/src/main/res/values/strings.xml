@@ -4,6 +4,7 @@
     <string name="favorite_button">Favorite</string>
     <string name="edit_button">Edit</string>
     <string name="power_button">Power</string>
+    <string name="mute_button">Mute</string>
     <string name="settings_button">Settings</string>
     <string name="home_button">Home</string>
     <string name="up_button">Up</string>
@@ -31,4 +32,8 @@
     <string name="device_list_connected">Connected</string>
     <string name="controller_device">Device</string>
     <string name="controller_disconnected">Disconnected</string>
+    <string name="connected">Connected</string>
+    <string name="connecting">Connecting</string>
+    <string name="pairing">Pairing</string>
+    <string name="disconnected">Disconnected</string>
 </resources>

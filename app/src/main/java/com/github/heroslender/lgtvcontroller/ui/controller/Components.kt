@@ -1,9 +1,9 @@
 package com.github.heroslender.lgtvcontroller.ui.controller
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -18,17 +18,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
+
+val ButtonShape = ShapeDefaults.Large
+val ControlsSpacing = 10.dp
 
 @Composable
 fun CTextButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = ShapeDefaults.ExtraSmall,
+    shape: Shape = ButtonShape,
     fontSize: TextUnit = 3.7.em,
     onClick: () -> Unit = {},
 ) {
@@ -43,7 +49,7 @@ fun CIconButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = ShapeDefaults.ExtraSmall,
+    shape: Shape = ButtonShape,
     useDefaultTint: Boolean = false,
     onClick: () -> Unit = {},
 ) {
@@ -63,10 +69,35 @@ fun CIconButton(
 }
 
 @Composable
+fun CIconButton(
+    imageVector: ImageVector,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    shape: Shape = ButtonShape,
+    useDefaultTint: Boolean = false,
+    onClick: () -> Unit = {},
+) {
+    val color = if (useDefaultTint) Color.Unspecified else null
+    CButton(enabled = enabled, shape = shape, modifier = modifier, onClick = onClick) {
+        if (color == null) {
+            Icon(imageVector = imageVector, contentDescription, modifier = Modifier.size(32.dp))
+        } else {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(32.dp),
+                tint = color
+            )
+        }
+    }
+}
+
+@Composable
 fun CButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = ShapeDefaults.ExtraSmall,
+    shape: Shape = ButtonShape,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit,
@@ -78,8 +109,8 @@ fun CButton(
         shape = shape,
         contentPadding = contentPadding,
         colors = ButtonColors(
-            containerColor = MaterialTheme.colorScheme.secondary,
-            contentColor = MaterialTheme.colorScheme.onSecondary,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
@@ -91,16 +122,15 @@ fun CButton(
 @Composable
 fun RowScope.VerticalControls(
     centerText: String,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     topButton: @Composable () -> Unit,
     bottomButton: @Composable () -> Unit,
 ) {
     Surface(
-        shape = ShapeDefaults.ExtraSmall,
-        color = if (enabled) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier
-            .fillMaxHeight()
-            .weight(1F)
+        shape = ButtonShape,
+        color = if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier
     ) {
         Column {
             topButton()
@@ -113,5 +143,47 @@ fun RowScope.VerticalControls(
 
             bottomButton()
         }
+    }
+}
+
+@Preview(
+    showBackground = true,
+)
+@Composable
+fun PreviewLight() {
+    LGTVControllerTheme {
+        CTextButton("Hello")
+    }
+}
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun PreviewDark() {
+    LGTVControllerTheme {
+        CTextButton("Hello")
+    }
+}
+
+@Preview(
+    showBackground = true,
+)
+@Composable
+fun PreviewLightDisabled() {
+    LGTVControllerTheme {
+        CTextButton("Hello", enabled = false)
+    }
+}
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun PreviewDarkDisabled() {
+    LGTVControllerTheme {
+        CTextButton("Hello", enabled = false)
     }
 }

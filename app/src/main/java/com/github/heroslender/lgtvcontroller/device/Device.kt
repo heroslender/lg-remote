@@ -18,6 +18,8 @@ interface Device {
 
     fun volumeDown()
 
+    fun mute()
+
     fun channelUp()
 
     fun channelDown()
@@ -33,6 +35,8 @@ interface Device {
     fun ok()
 
     fun back()
+
+    fun exit()
 
     fun home()
 

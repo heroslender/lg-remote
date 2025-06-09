@@ -84,7 +84,6 @@ fun TvEditScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(string.edit_tv_title)) },
-                windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp),
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
                         Icon(
@@ -105,11 +104,7 @@ fun TvEditScreen(
                 }
             },
             modifier = Modifier
-                .padding(
-                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
-                    top = innerPadding.calculateTopPadding()
-                )
+                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .fillMaxWidth()
         )

@@ -1,8 +1,12 @@
 package com.github.heroslender.lgtvcontroller.device
 
-enum class DeviceStatus {
-    CONNECTING,
-    PAIRING,
-    CONNECTED,
-    DISCONNECTED
+import com.github.heroslender.lgtvcontroller.R
+
+enum class DeviceStatus(
+    val nameResId: Int
+) {
+    CONNECTING(R.string.connecting),
+    PAIRING(R.string.pairing),
+    CONNECTED(R.string.connected),
+    DISCONNECTED(R.string.disconnected)
 }
