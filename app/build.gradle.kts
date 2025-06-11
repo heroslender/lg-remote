@@ -15,7 +15,7 @@ android {
         applicationId = "com.github.heroslender.lgtvcontroller"
         minSdk = 30
         targetSdk = 34
-        versionCode = 3
+        versionCode = 4
         versionName = "0.2.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -23,7 +23,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -43,6 +44,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.error.prone.annotations)
     implementation(libs.connect.sdk.android.lite)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

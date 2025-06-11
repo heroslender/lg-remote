@@ -1,19 +1,20 @@
 [versions]
-agp = "8.7.1"
-connectSdkAndroidLite = "2.1.2"
-datastore = "1.1.1"
+agp = "8.7.3"
+connectSdkAndroidLite = "2.1.4"
+datastore = "1.1.7"
+error_prone_annotations = "2.26.1"
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
 kotlin = "2.0.21"
-coreKtx = "1.13.1"
+coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.8.6"
-activityCompose = "1.9.3"
-composeBom = "2024.04.01"
-lifecycleViewmodelCompose = "2.6.1"
-navigationCompose = "2.8.4"
+lifecycleRuntimeKtx = "2.9.1"
+activityCompose = "1.10.1"
+composeBom = "2025.06.00"
+lifecycleViewmodelCompose = "2.9.1"
+navigationCompose = "2.9.0"
 room = "2.7.1"
 ksp = "2.0.21-1.0.27"
 protobuf-javalite = "3.23.3"
@@ -28,6 +29,7 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+error_prone_annotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "error_prone_annotations" }
 ksp-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 ksp-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
