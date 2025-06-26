@@ -10,11 +10,12 @@ sealed class NavDest(
     val route: String,
 ) {
     data object DeviceList : NavDest("device_list")
+    data object Home : NavDest("home")
+    data object Controller : NavDest("controller")
     data object EditDevice : NavDest("device_edit") {
         const val tvIdArg = "tvId"
         override val routeWithArgs = "$route/{$tvIdArg}"
     }
-    data object Controller : NavDest("controller")
 
     /**
      * Route for this destination if it contains arguments

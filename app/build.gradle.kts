@@ -15,8 +15,8 @@ android {
         applicationId = "com.github.heroslender.lgtvcontroller"
         minSdk = 30
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.2.3"
+        versionCode = 5
+        versionName = "0.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -59,6 +59,9 @@ dependencies {
 
     implementation(libs.androidx.datastore)
     implementation(libs.protobuf.javalite)
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)

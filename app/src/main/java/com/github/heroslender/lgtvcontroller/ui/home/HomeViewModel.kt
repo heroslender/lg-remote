@@ -1,4 +1,4 @@
-package com.github.heroslender.lgtvcontroller.ui.controller
+package com.github.heroslender.lgtvcontroller.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,28 +15,32 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ControllerViewModel @Inject constructor(
+class HomeViewModel @Inject constructor(
     private val deviceManager: DeviceManager,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
-    val uiState: StateFlow<ControllerUiState> =
+    val uiState: StateFlow<HomeUiState> =
         deviceManager.connectedDevice.flatMapLatest { device ->
             if (device == null) {
-                return@flatMapLatest flowOf(ControllerUiState())
+                return@flatMapLatest flowOf(HomeUiState())
             }
 
             combine(
                 device.status,
                 settingsRepository.settingsFlow,
-            ) { deviceStatus, settings ->
-                ControllerUiState(
+                device.apps,
+                device.inputs,
+            ) { deviceStatus, settings, apps, inputs ->
+                HomeUiState(
                     device = device,
                     deviceName = if (device.displayName.isNullOrEmpty()) device.friendlyName else device.displayName,
                     deviceStatus = deviceStatus,
                     isFavorite = device.id == settings.favoriteId,
+                    apps = apps,
+                    inputs = inputs,
                 )
             }
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, ControllerUiState())
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
 
     fun setFavorite(isFavorite: Boolean) {
         viewModelScope.launch {

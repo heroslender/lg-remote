@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.github.heroslender.lgtvcontroller.ui.controller.ControllerScreen
 import com.github.heroslender.lgtvcontroller.ui.devicelist.DeviceListScreen
 import com.github.heroslender.lgtvcontroller.ui.editor.TvEditScreen
+import com.github.heroslender.lgtvcontroller.ui.home.HomeScreen
 
 @Composable
 fun ControllerNavHost(
@@ -24,7 +25,7 @@ fun ControllerNavHost(
         composable(NavDest.DeviceList.route) {
             DeviceListScreen(
                 navigateToController = {
-                    navController.navigate(NavDest.Controller.route) {
+                    navController.navigate(NavDest.Home.route) {
                         popUpTo(NavDest.DeviceList.route) {
                             inclusive = true
                         }
@@ -35,13 +36,24 @@ fun ControllerNavHost(
             )
         }
 
-        composable(NavDest.Controller.route) {
-            ControllerScreen(
+        composable(NavDest.Home.route) {
+            HomeScreen(
                 navigateToDeviceList = {
                     navController.navigate(NavDest.DeviceList.route)
                 },
+                navigateToController = {
+                    navController.navigate(NavDest.Controller.route)
+                },
                 navigateToEditDevice = {
                     navController.navigate("${NavDest.EditDevice.route}/$it")
+                },
+            )
+        }
+
+        composable(NavDest.Controller.route) {
+            ControllerScreen(
+                navigateUp = {
+                    navController.navigate(NavDest.Home.route)
                 },
             )
         }
@@ -54,7 +66,7 @@ fun ControllerNavHost(
         ) {
             TvEditScreen(
                 navigateBack = {
-                    navController.navigate(NavDest.Controller.route) {
+                    navController.navigate(NavDest.Home.route) {
                         popUpTo(NavDest.DeviceList.route) {
                             inclusive = true
                         }

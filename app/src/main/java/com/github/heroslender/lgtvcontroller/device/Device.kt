@@ -10,6 +10,9 @@ interface Device {
 
     val status: Flow<DeviceStatus>
 
+    val apps: Flow<List<LgAppInfo>>
+    val inputs: Flow<List<LgAppInfo>>
+
     fun hasCapability(capability: String): Boolean
 
     fun powerOff()

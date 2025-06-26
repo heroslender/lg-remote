@@ -57,13 +57,20 @@ class DeviceManager(
         DiscoveryManager.getInstance().start()
 
         scope.launch {
-            while (!hasConnected) {
-                for (discoveryProvider in DiscoveryManager.getInstance().discoveryProviders) {
-                    Log.d("Device_Manager", "rescan :::: " + discoveryProvider::class.simpleName)
-                    discoveryProvider.rescan()
-                }
+            try {
+                while (!hasConnected) {
+                    for (discoveryProvider in DiscoveryManager.getInstance().discoveryProviders) {
+                        Log.d(
+                            "Device_Manager",
+                            "rescan :::: " + discoveryProvider::class.simpleName
+                        )
+                        discoveryProvider.rescan()
+                    }
 
-                delay(2000)
+                    delay(2000)
+                }
+            } catch (e: Exception) {
+                Log.e("Device_Manager", "rescan :::: " + e.message)
             }
         }
     }
@@ -81,6 +88,10 @@ class DeviceManager(
     fun onDeviceConnected(device: Device) {
         val networkDevice = getDevice(device.id) ?: return
         networkDevice.updateStatus(DeviceStatus.CONNECTED)
+
+        scope.launch {
+            (device as LgDevice).loadAppsAndSources()
+        }
     }
 
     fun onDeviceDisconnected(device: Device) {

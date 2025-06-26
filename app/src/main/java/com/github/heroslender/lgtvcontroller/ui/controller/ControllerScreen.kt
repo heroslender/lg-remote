@@ -18,17 +18,12 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.Icons.Filled
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,62 +43,43 @@ import com.connectsdk.service.capability.KeyControl
 import com.connectsdk.service.capability.PowerControl
 import com.connectsdk.service.capability.TVControl
 import com.connectsdk.service.capability.VolumeControl
+import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
+import com.github.heroslender.lgtvcontroller.device.LgAppInfo
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview()
 @Composable
-fun ControlPreview(
-    isConnected: Boolean = true,
-    isFavorite: Boolean = false,
-) {
-    val device = if (isConnected) PreviewDevice else null
-    val controllerUiState = ControllerUiState(
-        device = device,
-        deviceName = device?.friendlyName,
-        deviceStatus = device?.let { runBlocking { it.status.first() } }
-            ?: DeviceStatus.DISCONNECTED,
-        isFavorite = isFavorite
+fun ControlPreview() {
+    ControllerScreenPreview(
+        isConnected = true,
+        isFavorite = false,
     )
-
-    LGTVControllerTheme {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface
-        ) { innerPadding ->
-            Column(
-                verticalArrangement = Arrangement.spacedBy(ControlsSpacing),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 36.dp, vertical = 16.dp)
-            ) {
-                Header(
-                    device = controllerUiState.device,
-                    deviceName = controllerUiState.deviceName,
-                    deviceStatus = controllerUiState.deviceStatus,
-                    isFavorite = controllerUiState.isFavorite,
-                    onFavouriteToggle = { },
-                    navigateToDeviceList = { },
-                    navigateToEditDevice = { },
-                )
-
-                Controls(controllerUiState.device)
-            }
-        }
-    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ControlPreviewDisconnected(
-    isConnected: Boolean = false,
-    isFavorite: Boolean = false,
+fun ControlPreviewDisconnected() {
+    ControllerScreenPreview(
+        isConnected = false,
+        isFavorite = false,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ControllerScreenPreview(
+    isConnected: Boolean,
+    isFavorite: Boolean,
 ) {
     val device = if (isConnected) PreviewDevice else null
     val controllerUiState = ControllerUiState(
@@ -116,22 +92,26 @@ fun ControlPreviewDisconnected(
 
     LGTVControllerTheme {
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surface
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                ControllerTopAppBar(
+                    title = stringResource(R.string.controller_title),
+                    navigateUp = {},
+                )
+            }
         ) { innerPadding ->
             Column(
                 verticalArrangement = Arrangement.spacedBy(ControlsSpacing),
                 modifier = Modifier
+                    .padding(innerPadding)
                     .fillMaxSize()
-                    .padding(horizontal = 36.dp, vertical = 16.dp)
+                    .padding(horizontal = 36.dp, vertical = 4.dp)
             ) {
                 Header(
                     device = controllerUiState.device,
                     deviceName = controllerUiState.deviceName,
                     deviceStatus = controllerUiState.deviceStatus,
-                    isFavorite = controllerUiState.isFavorite,
-                    onFavouriteToggle = { },
                     navigateToDeviceList = { },
-                    navigateToEditDevice = { },
                 )
 
                 Controls(controllerUiState.device)
@@ -140,14 +120,20 @@ fun ControlPreviewDisconnected(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ControllerScreen(
     controllerViewModel: ControllerViewModel = hiltViewModel(),
-    navigateToDeviceList: () -> Unit,
-    navigateToEditDevice: (String) -> Unit,
+    navigateUp: () -> Unit,
 ) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            ControllerTopAppBar(
+                title = stringResource(R.string.controller_title),
+                navigateUp = navigateUp,
+            )
+        }
     ) { innerPadding ->
         Column(
             verticalArrangement = Arrangement.spacedBy(ControlsSpacing),
@@ -161,16 +147,7 @@ fun ControllerScreen(
                 device = controllerUiState.device,
                 deviceName = controllerUiState.deviceName,
                 deviceStatus = controllerUiState.deviceStatus,
-                isFavorite = controllerUiState.isFavorite,
-                onFavouriteToggle = { controllerViewModel.setFavorite(!controllerUiState.isFavorite) },
-                navigateToDeviceList = navigateToDeviceList,
-                navigateToEditDevice = {
-                    controllerUiState.device?.id?.also {
-                        navigateToEditDevice(
-                            it
-                        )
-                    }
-                },
+                navigateToDeviceList = navigateUp,
             )
 
             Controls(controllerUiState.device)
@@ -183,10 +160,7 @@ fun Header(
     device: Device?,
     deviceName: String?,
     deviceStatus: DeviceStatus,
-    isFavorite: Boolean,
-    onFavouriteToggle: () -> Unit,
     navigateToDeviceList: () -> Unit,
-    navigateToEditDevice: () -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -196,20 +170,17 @@ fun Header(
             modifier = Modifier
                 .height(IntrinsicSize.Min)
                 .fillMaxWidth()
-                .padding(4.dp),
+                .padding(horizontal = 9.dp, vertical = 4.dp),
         ) {
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 5.dp),
-                horizontalArrangement = Arrangement.Absolute.Left
-            ) {
+            Row(horizontalArrangement = Arrangement.Absolute.Left) {
                 PowerButton(device)
             }
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable(onClick = navigateToDeviceList)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = navigateToDeviceList)
             ) {
                 if (deviceName == null) {
                     Text(stringResource(string.controller_device))
@@ -222,27 +193,6 @@ fun Header(
                     )
                 }
             }
-
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.Absolute.Right
-            ) {
-                if (deviceName != null && deviceStatus == DeviceStatus.CONNECTED) {
-                    IconButton(onClick = onFavouriteToggle) {
-                        Icon(
-                            imageVector = if (isFavorite) Filled.Star else Filled.StarBorder,
-                            contentDescription = stringResource(string.favorite_button),
-                        )
-                    }
-
-                    IconButton(onClick = navigateToEditDevice) {
-                        Icon(
-                            imageVector = Filled.Edit,
-                            contentDescription = stringResource(string.edit_button),
-                        )
-                    }
-                }
-            }
         }
     }
 }
@@ -252,9 +202,7 @@ fun PowerButton(device: Device?) {
     if (device.hasCapability(PowerControl.Any)) {
         FilledIconButton(
             colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = colorResource(
-                    R.color.power
-                )
+                containerColor = colorResource(R.color.power)
             ),
             onClick = {
                 device?.powerOff()
@@ -459,7 +407,7 @@ fun ColumnScope.Controls(device: Device?) {
 @Composable
 fun RowScope.VolumeControls(
     device: Device?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val isEnabled = device.hasCapability(VolumeControl.Volume_Up_Down)
     VerticalControls(
@@ -496,7 +444,7 @@ fun RowScope.VolumeControls(
 @Composable
 fun RowScope.ChannelControls(
     device: Device?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     VerticalControls(
         centerText = stringResource(string.channel_controls),
@@ -532,10 +480,12 @@ fun RowScope.ChannelControls(
 fun Device?.hasCapability(capability: String) = this?.hasCapability(capability) == true
 
 object PreviewDevice : Device {
-    override val id: String = "asddgres--sdfsdf-sdf"
-    override val friendlyName: String = "Your Awesome TV"
+    override val id: String = "gads-sdgfds-g-fdsgfdgdf-sdfsdf"
+    override val friendlyName: String = "Living Room TV"
     override val displayName: String? = null
     override val status: Flow<DeviceStatus> = flowOf(DeviceStatus.CONNECTED)
+    override val apps: Flow<List<LgAppInfo>> = flowOf(emptyList())
+    override val inputs: Flow<List<LgAppInfo>> = flowOf(emptyList())
 
     override fun hasCapability(capability: String): Boolean = true
     override fun powerOff() {}
