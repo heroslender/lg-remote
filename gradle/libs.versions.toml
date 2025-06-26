@@ -1,5 +1,5 @@
 [versions]
-agp = "8.7.3"
+agp = "8.11.0"
 coilCompose = "3.2.0"
 connectSdkAndroidLite = "2.1.4"
 datastore = "1.1.7"
