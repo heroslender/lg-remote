@@ -9,9 +9,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var deviceManager: DeviceManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,6 +26,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        deviceManager.resume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        deviceManager.pause()
     }
 }
 

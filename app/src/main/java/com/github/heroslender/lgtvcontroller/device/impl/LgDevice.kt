@@ -154,7 +154,7 @@ class LgDevice(
                             name = raw.getString("title"),
                             icon = raw.getString("icon"),
                             iconLarge = raw.getString("largeIcon"),
-                        ).also { println(it) })
+                        ))
                 }
 
                 launchPointsState.value = list

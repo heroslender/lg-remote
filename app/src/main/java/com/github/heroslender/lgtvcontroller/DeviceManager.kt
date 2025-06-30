@@ -41,6 +41,19 @@ class DeviceManager(
 
     private var hasConnected = false
 
+    /**
+     * Whether the app is running in the background or not.
+     * This is because when the app is in the background, it looses connection to the internet,
+     * and therefore, disconnects from the tv. This is used to reconnect back to the tv when the
+     * app returns to the foreground.
+     */
+    private var isAppPaused = false
+
+    /**
+     * The id of the tv that was connected when the app was paused.
+     */
+    private var connectedTvId: String? = null
+
     init {
         Log.d("Event_Listener", "restartDiscoveryManager :::: restart discovery")
         DiscoveryManager.init(ctx)
@@ -95,6 +108,10 @@ class DeviceManager(
     }
 
     fun onDeviceDisconnected(device: Device) {
+        if (isAppPaused) {
+            this.connectedTvId = device.id
+        }
+
         val networkDevice = getDevice(device.id) ?: return
         networkDevice.updateStatus(DeviceStatus.DISCONNECTED)
 
@@ -209,5 +226,23 @@ class DeviceManager(
 
     fun tvUpdated(tv: Tv) {
         devices.value.first { it.id == tv.id }.displayName = tv.displayName
+    }
+
+    fun resume() {
+        isAppPaused = false
+
+        val connectedTvId = connectedTvId ?: return
+        this.connectedTvId = null
+
+        if (connectedDevice.value != null) {
+            return
+        }
+
+        val networkDevice = getDevice(connectedTvId) ?: return
+        networkDevice.connect()
+    }
+
+    fun pause() {
+        isAppPaused = true
     }
 }
