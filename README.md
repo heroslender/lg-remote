@@ -4,8 +4,9 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/heroslender/lg-remote.svg)](https://github.com/heroslender/lg-remote/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues-raw/heroslender/lg-remote.svg?label=issues)](https://github.com/heroslender/lg-remote/issues)
-[![GitHub last commit](https://img.shields.io/github/last-commit/heroslender/lg-remote/develop.svg)](https://github.com/heroslender/lg-remote/commit)
-[![Open Source Love](https://badges.frapsoft.com/os/v2/open-source.png?v=103)](https://github.com/ellerbrock/open-source-badges/)
+[![GitHub last commit](https://img.shields.io/github/last-commit/heroslender/lg-remote)](https://github.com/heroslender/lg-remote/commit)
+[![GitHub last commit](https://img.shields.io/github/downloads/heroslender/lg-remote/total)](https://github.com/heroslender/lg-remote/releases)
+[![GitHub Tag](https://img.shields.io/github/v/tag/heroslender/lg-remote?label=Version)](https://github.com/heroslender/lg-remote/releases/latest)
 
 An ad free android app to control your LG television.
 
