@@ -1,4 +1,4 @@
-<img src=".github/assets/icon.png" alt="Elytra" title="Elytra" align="right"/>
+<img src=".github/assets/icon.png" alt="Elytra" title="LG TV Controller" align="right"/>
 
 ## LG TV Controller
 
