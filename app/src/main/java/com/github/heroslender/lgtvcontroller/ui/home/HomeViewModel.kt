@@ -30,10 +30,11 @@ class HomeViewModel @Inject constructor(
                 settingsRepository.settingsFlow,
                 device.apps,
                 device.inputs,
-            ) { deviceStatus, settings, apps, inputs ->
+                device.displayName,
+            ) { deviceStatus, settings, apps, inputs, displayName ->
                 HomeUiState(
                     device = device,
-                    deviceName = if (device.displayName.isNullOrEmpty()) device.friendlyName else device.displayName,
+                    deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName,
                     deviceStatus = deviceStatus,
                     isFavorite = device.id == settings.favoriteId,
                     apps = apps,

@@ -1,6 +1,6 @@
-package com.github.heroslender.lgtvcontroller.device
+package com.github.heroslender.lgtvcontroller.domain.model
 
-data class LgAppInfo(
+data class App(
     /**
      * App ID
      */

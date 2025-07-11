@@ -4,10 +4,13 @@ import com.connectsdk.core.AppInfo
 import com.connectsdk.service.WebOSTVService
 import com.connectsdk.service.capability.Launcher
 import com.connectsdk.service.command.ServiceCommandError
+import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
-import com.github.heroslender.lgtvcontroller.device.LgAppInfo
+import com.github.heroslender.lgtvcontroller.domain.model.App
+import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.utils.sendSpecialKey
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -16,31 +19,36 @@ import org.json.JSONArray
 
 class LgDevice(
     val device: LgNetworkDevice,
+    private val manager: DeviceManager,
     status: DeviceStatus = DeviceStatus.DISCONNECTED,
 ) : Device {
-    private var _status: MutableStateFlow<DeviceStatus> =
+    override val tv: Tv
+        get() = device.tv
+
+    private val _status: MutableStateFlow<DeviceStatus> =
         MutableStateFlow(status)
     override val status: StateFlow<DeviceStatus>
         get() = _status
 
-    private var _apps: MutableStateFlow<List<LgAppInfo>> =
-        MutableStateFlow(emptyList())
-    override val apps: StateFlow<List<LgAppInfo>>
+    private val _apps: MutableStateFlow<List<App>> =
+        MutableStateFlow(tv.apps)
+    override val apps: StateFlow<List<App>>
         get() = _apps
 
-    private var _inputs: MutableStateFlow<List<LgAppInfo>> =
-        MutableStateFlow(emptyList())
-    override val inputs: StateFlow<List<LgAppInfo>>
+    private val _inputs: MutableStateFlow<List<App>> =
+        MutableStateFlow(tv.inputs)
+    override val inputs: StateFlow<List<App>>
         get() = _inputs
 
     override val id: String
         get() = device.id
 
     override val friendlyName: String
-        get() = device.friendlyName
+        get() = tv.name
 
-    override val displayName: String?
-        get() = device.displayName
+    private val _displayName: MutableStateFlow<String?> = MutableStateFlow(tv.displayName)
+    override val displayName: Flow<String?>
+        get() = _displayName
 
     val service
         get() = device.device.getServiceByName(WebOSTVService.ID) as WebOSTVService
@@ -138,23 +146,24 @@ class LgDevice(
     }
 
     suspend fun loadAppsAndSources() {
-        val launchPointsState = MutableStateFlow<List<LgAppInfo>>(emptyList())
+        val launchPointsState = MutableStateFlow<List<App>>(emptyList())
         val webOSTVService = device.device.getServiceByName(WebOSTVService.ID) as WebOSTVService
         webOSTVService.getLaunchPoints(object : WebOSTVService.LaunchPointsListener {
             override fun onSuccess(arr: JSONArray) {
-                val list = mutableListOf<LgAppInfo>()
+                val list = mutableListOf<App>()
                 for (i in 0 until arr.length()) {
                     val raw = arr.getJSONObject(i)
                     if (raw.getBoolean("systemApp"))
                         continue
 
                     list.add(
-                        LgAppInfo(
+                        App(
                             id = raw.getString("id"),
                             name = raw.getString("title"),
                             icon = raw.getString("icon"),
                             iconLarge = raw.getString("largeIcon"),
-                        ))
+                        )
+                    )
                 }
 
                 launchPointsState.value = list
@@ -196,8 +205,12 @@ class LgDevice(
         })
 
         combine(launchPointsState, appListState) { launchPointsFound, appListFound ->
-            val appList = mutableListOf<LgAppInfo>()
-            val inputList = mutableListOf<LgAppInfo>()
+            if (launchPointsFound.isEmpty() || appListFound.isEmpty()) {
+                return@combine
+            }
+
+            val appList = mutableListOf<App>()
+            val inputList = mutableListOf<App>()
 
             launchPointsFound.forEach { app ->
                 val found = appListFound.firstOrNull { it.id == app.id }
@@ -213,8 +226,16 @@ class LgDevice(
 
             appList.sortByDescending { it.installedTime }
 
+            tv.apps = appList
+            tv.inputs = inputList
             _apps.value = appList
             _inputs.value = inputList
+
+            manager.updateTv(tv)
         }.collect()
+    }
+
+    fun updateDisplayName() {
+        _displayName.tryEmit(tv.displayName)
     }
 }

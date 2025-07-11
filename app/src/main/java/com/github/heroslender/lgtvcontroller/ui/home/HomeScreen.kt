@@ -1,6 +1,5 @@
 package com.github.heroslender.lgtvcontroller.ui.home
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +30,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -44,28 +44,22 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil3.ImageLoader
-import coil3.asImage
-import coil3.compose.AsyncImagePreviewHandler
-import coil3.compose.LocalAsyncImagePreviewHandler
-import coil3.compose.rememberAsyncImagePainter
-import coil3.imageLoader
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideSubcomposition
+import com.bumptech.glide.integration.compose.RequestState
+import com.bumptech.glide.load.model.GlideUrl
 import com.connectsdk.service.capability.KeyControl
 import com.connectsdk.service.capability.PowerControl
 import com.connectsdk.service.capability.VolumeControl
@@ -75,7 +69,7 @@ import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.TopAppBarAction
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
-import com.github.heroslender.lgtvcontroller.device.LgAppInfo
+import com.github.heroslender.lgtvcontroller.domain.model.App
 import com.github.heroslender.lgtvcontroller.ui.controller.ButtonShape
 import com.github.heroslender.lgtvcontroller.ui.controller.CIconButton
 import com.github.heroslender.lgtvcontroller.ui.controller.CTextButton
@@ -85,11 +79,6 @@ import com.github.heroslender.lgtvcontroller.ui.icons.TvRemote
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Preview()
@@ -106,60 +95,53 @@ fun HomePreview(
             ?: DeviceStatus.DISCONNECTED,
         isFavorite = isFavorite,
         apps = listOf(
-            LgAppInfo(id = "asd", name = "YouTube"),
-            LgAppInfo(id = "asdd", name = "Netflix"),
+            App(id = "asd", name = "YouTube"),
+            App(id = "asdd", name = "Netflix"),
         ),
         inputs = listOf(
-            LgAppInfo(id = "asd", name = "HDMI1"),
-            LgAppInfo(id = "asdd", name = "HDMI2"),
-            LgAppInfo(id = "asdd", name = "SCART"),
+            App(id = "asd", name = "HDMI1"),
+            App(id = "asdd", name = "HDMI2"),
+            App(id = "asdd", name = "SCART"),
         )
     )
 
     LGTVControllerTheme {
-        val drawable = ContextCompat.getDrawable(LocalContext.current, R.drawable.netflix)
-        val previewHandler = AsyncImagePreviewHandler {
-            drawable.asImage()
-        }
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                ControllerTopAppBar(
+                    title = uiState.deviceName ?: "",
+                    subtitle = stringResource(uiState.deviceStatus.nameResId),
+                    titleHorizontalAlignment = Alignment.CenterHorizontally,
+                    navigateUp = { },
+                    actions = {
+                        TopAppBarAction(
+                            imageVector = if (uiState.isFavorite) Filled.Star else Filled.StarBorder,
+                            contentDescription = stringResource(string.favorite_button),
+                        ) { }
 
-        CompositionLocalProvider(LocalAsyncImagePreviewHandler provides previewHandler) {
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                topBar = {
-                    ControllerTopAppBar(
-                        title = uiState.deviceName ?: "",
-                        subtitle = stringResource(uiState.deviceStatus.nameResId),
-                        titleHorizontalAlignment = Alignment.CenterHorizontally,
-                        navigateUp = { },
-                        actions = {
-                            TopAppBarAction(
-                                imageVector = if (uiState.isFavorite) Filled.Star else Filled.StarBorder,
-                                contentDescription = stringResource(string.favorite_button),
-                            ) { }
+                        TopAppBarAction(
+                            imageVector = Filled.Settings,
+                            contentDescription = stringResource(string.edit_button),
+                            enabled = uiState.device != null,
+                        ) { }
+                    },
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                ControllerShortcutsCard(uiState.device, {})
 
-                            TopAppBarAction(
-                                imageVector = Filled.Settings,
-                                contentDescription = stringResource(string.edit_button),
-                                enabled = uiState.device != null,
-                            ) { }
-                        },
-                    )
-                }
-            ) { innerPadding ->
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    ControllerShortcutsCard(uiState.device, {})
+                AppsCard(uiState.apps, {})
 
-                    AppsCard(uiState.apps, {})
-
-                    InputsCard(uiState.inputs, {})
-                }
+                InputsCard(uiState.inputs, {})
             }
         }
     }
@@ -322,11 +304,11 @@ fun ColumnScope.VolumeControls(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun AppsCard(
-    apps: List<LgAppInfo>,
-    openApp: (LgAppInfo) -> Unit,
+    apps: List<App>,
+    openApp: (App) -> Unit,
 ) {
     ScrollContentCard(
         iconVector = Filled.Widgets,
@@ -338,24 +320,50 @@ fun AppsCard(
                 shape = IconButtonDefaults.smallSquareShape,
                 modifier = Modifier.size(96.dp),
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        appInfo.iconLarge,
-                        imageLoader = initUntrustImageLoader()
-                    ),
-                    contentDescription = appInfo.name,
-                    modifier = Modifier.fillMaxSize()
-                )
+                GlideSubcomposition(
+                    model = CustomGlideUrl(appInfo.iconLarge, appInfo.name),
+                    modifier = Modifier
+                        .weight(1F)
+                        .aspectRatio(1F, true)
+                ) {
+                    when (state) {
+                        RequestState.Loading -> CircularProgressIndicator(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .weight(1F)
+                                .aspectRatio(1F, true)
+                        )
+
+                        is RequestState.Success -> Image(
+                            painter = painter,
+                            contentDescription = appInfo.name,
+                            modifier = Modifier
+                                .weight(1F)
+                                .aspectRatio(1F, true)
+                        )
+
+                        RequestState.Failure -> TODO()
+                    }
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+class CustomGlideUrl(
+    url: String,
+    val cacheName: String,
+) : GlideUrl(url) {
+    override fun getCacheKey(): String? {
+        return cacheName
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun InputsCard(
-    inputs: List<LgAppInfo>,
-    switchInput: (LgAppInfo) -> Unit,
+    inputs: List<App>,
+    switchInput: (App) -> Unit,
 ) {
     ScrollContentCard(
         iconVector = Filled.ElectricalServices,
@@ -374,16 +382,32 @@ fun InputsCard(
                     modifier = Modifier
                         .height(96.dp)
                 ) {
-                    Icon(
-                        painter = rememberAsyncImagePainter(
-                            appInfo.iconLarge,
-                            imageLoader = initUntrustImageLoader()
-                        ),
-                        contentDescription = appInfo.name,
+                    GlideSubcomposition(
+                        model = CustomGlideUrl(appInfo.iconLarge, appInfo.name),
                         modifier = Modifier
                             .weight(1F)
                             .aspectRatio(1F, true)
-                    )
+                    ) {
+                        when (state) {
+                            RequestState.Loading -> CircularProgressIndicator(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .weight(1F)
+                                    .aspectRatio(1F, true)
+                            )
+
+                            is RequestState.Success -> Icon(
+                                painter = painter,
+                                contentDescription = appInfo.name,
+                                modifier = Modifier
+                                    .weight(1F)
+                                    .aspectRatio(1F, true)
+                            )
+
+                            RequestState.Failure -> TODO()
+                        }
+                    }
+
                     Text(
                         text = appInfo.name,
                         modifier = Modifier,
@@ -498,44 +522,4 @@ fun ColumnScope.HorizontalControls(
             bottomButton()
         }
     }
-}
-
-@Composable
-private fun initUntrustImageLoader(): ImageLoader {
-    // Create a trust manager that does not validate certificate chains
-    val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-        @SuppressLint("TrustAllX509TrustManager")
-        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
-        }
-
-        @SuppressLint("TrustAllX509TrustManager")
-        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-        }
-
-        override fun getAcceptedIssuers(): Array<X509Certificate> {
-            return arrayOf()
-        }
-    })
-
-    // Install the all-trusting trust manager
-    val sslContext = SSLContext.getInstance("SSL")
-    sslContext.init(null, trustAllCerts, java.security.SecureRandom())
-
-    // Create an ssl socket factory with our all-trusting manager
-    val sslSocketFactory = sslContext.socketFactory
-
-    val client = OkHttpClient.Builder()
-        .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
-        .hostnameVerifier { _, _ -> true }.build()
-
-
-    return LocalContext.current.imageLoader.newBuilder()
-        .components {
-            add(
-                OkHttpNetworkFetcherFactory(callFactory = {
-                    return@OkHttpNetworkFetcherFactory client
-                })
-            )
-        }
-        .build()
 }

@@ -15,8 +15,8 @@ import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.device.NetworkDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgNetworkDevice
+import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
-import com.github.heroslender.lgtvcontroller.storage.Tv
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -168,7 +168,7 @@ class DeviceManager(
                     .first()
             } catch (_: IllegalStateException) {
                 Log.d("DeviceManager", "Device not found in database")
-                null
+                Tv(id = device.id, name = device.friendlyName)
             }
 
             val networkDevice = LgNetworkDevice(
@@ -198,7 +198,7 @@ class DeviceManager(
             currDevice.disconnect()
         }
 
-        val device = LgDevice(cDevice, DeviceStatus.CONNECTING)
+        val device = LgDevice(cDevice, this, DeviceStatus.CONNECTING)
         cDevice.device.addListener(DeviceListener(this, device))
         cDevice.device.connect()
 
@@ -206,7 +206,7 @@ class DeviceManager(
         hasConnected = true
 
         scope.launch {
-            tvRepository.insertTv(Tv(device.id, device.friendlyName, ""))
+            tvRepository.insertTv(Tv(id = device.id, name = device.friendlyName))
         }
     }
 
@@ -224,8 +224,17 @@ class DeviceManager(
         }
     }
 
-    fun tvUpdated(tv: Tv) {
+    fun updateTv(tv: Tv) {
         devices.value.first { it.id == tv.id }.displayName = tv.displayName
+
+        val currDevice = connectedDevice.value
+        if (currDevice != null && currDevice.id == tv.id) {
+            (currDevice as LgDevice).updateDisplayName()
+        }
+
+        scope.launch {
+            tvRepository.updateTv(tv)
+        }
     }
 
     fun resume() {

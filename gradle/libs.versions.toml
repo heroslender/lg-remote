@@ -1,9 +1,11 @@
 [versions]
 agp = "8.11.0"
-coilCompose = "3.2.0"
 connectSdkAndroidLite = "2.1.4"
 datastore = "1.1.7"
 error_prone_annotations = "2.26.1"
+glide = "4.16.0"
+glideCompose = "1.0.0-beta01"
+gson = "2.13.1"
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
 kotlin = "2.0.21"
@@ -11,7 +13,7 @@ coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.9.1"
+lifecycleRuntime = "2.9.1"
 activityCompose = "1.10.1"
 composeBom = "2025.06.00"
 lifecycleViewmodelCompose = "2.9.1"
@@ -30,9 +32,12 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
-coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilCompose" }
 error_prone_annotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "error_prone_annotations" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "glideCompose" }
+ksp-glide-compiler = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
+glide-okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "glide" }
 ksp-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 ksp-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
@@ -40,7 +45,7 @@ connect-sdk-android-lite = { module = "com.github.ConnectSDK:Connect-SDK-Android
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntime" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }

@@ -6,23 +6,24 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.github.heroslender.lgtvcontroller.storage.entity.TvEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TvDao {
 
     @Query("SELECT * FROM tvs WHERE id = :id")
-    fun getTv(id: String): Flow<Tv>
+    fun getTv(id: String): Flow<TvEntity>
 
     @Query("SELECT * FROM tvs")
-    fun getAllTvs(): Flow<List<Tv>>
+    fun getAllTvs(): Flow<List<TvEntity>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(tv: Tv)
+    suspend fun insert(tv: TvEntity)
 
     @Update
-    suspend fun update(tv: Tv)
+    suspend fun update(tv: TvEntity)
 
     @Delete
-    suspend fun delete(tv: Tv)
+    suspend fun delete(tv: TvEntity)
 }

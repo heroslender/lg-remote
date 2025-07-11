@@ -27,11 +27,12 @@ class ControllerViewModel @Inject constructor(
 
             combine(
                 device.status,
+                device.displayName,
                 settingsRepository.settingsFlow,
-            ) { deviceStatus, settings ->
+            ) { deviceStatus, displayName, settings ->
                 ControllerUiState(
                     device = device,
-                    deviceName = if (device.displayName.isNullOrEmpty()) device.friendlyName else device.displayName,
+                    deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName,
                     deviceStatus = deviceStatus,
                     isFavorite = device.id == settings.favoriteId,
                 )

@@ -66,13 +66,7 @@ fun ControllerNavHost(
         ) {
             TvEditScreen(
                 navigateBack = {
-                    navController.navigate(NavDest.Home.route) {
-                        popUpTo(NavDest.DeviceList.route) {
-                            inclusive = true
-                        }
-
-                        launchSingleTop = true
-                    }
+                    navController.popBackStack()
                 },
             )
         }

@@ -7,7 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.heroslender.lgtvcontroller.DeviceManager
-import com.github.heroslender.lgtvcontroller.storage.Tv
+import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
 import com.github.heroslender.lgtvcontroller.ui.navigation.NavDest
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +29,7 @@ class TvEditViewModel @Inject constructor(
             val id: String = checkNotNull(savedStateHandle[NavDest.EditDevice.tvIdArg])
 
             tvRepository.getTvStream(id).collect {
-                updateUiState(TvDetails(it.id, it.name, it.displayName))
+                updateUiState(TvDetails(it.id, it.name, it.displayName ?: ""))
             }
         }
     }
@@ -42,20 +42,21 @@ class TvEditViewModel @Inject constructor(
         return uiState.tvDisplayName.isNotEmpty() && uiState.tvId != "Loading..."
     }
 
-    suspend fun save() {
+    fun save() {
         if (validateInput()) {
-            val tv = tvUiState.tvDetails.toTvEntity()
+            val tv = tvUiState.tvDetails
                 // Remove trailing whitespaces added sometimes with autocomplete
-                .let { it.copy(displayName = it.displayName.trim()) }
-            tvRepository.updateTv(tv)
-            deviceManager.tvUpdated(tv)
+                .run { copy(tvDisplayName = tvDisplayName.trim()) }
+                .toTv()
+
+            deviceManager.updateTv(tv)
         }
     }
 }
 
 data class TvUiState(
     var tvDetails: TvDetails = TvDetails(),
-    var isValid: Boolean = false
+    var isValid: Boolean = false,
 )
 
 data class TvDetails(
@@ -64,4 +65,4 @@ data class TvDetails(
     var tvDisplayName: String = "",
 )
 
-fun TvDetails.toTvEntity(): Tv = Tv(tvId, tvName, tvDisplayName)
+fun TvDetails.toTv(): Tv = Tv(tvId, tvName, tvDisplayName)

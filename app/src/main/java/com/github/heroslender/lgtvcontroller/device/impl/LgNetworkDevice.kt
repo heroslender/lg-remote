@@ -7,16 +7,15 @@ import com.connectsdk.device.ConnectableDevice
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.device.NetworkDevice
-import com.github.heroslender.lgtvcontroller.storage.Tv
+import com.github.heroslender.lgtvcontroller.domain.model.Tv
 
 class LgNetworkDevice(
     val device: ConnectableDevice,
-    tv: Tv?,
+    override val tv: Tv,
     private val manager: DeviceManager,
 ) : NetworkDevice {
     override val id: String = device.id
     override val friendlyName: String = device.friendlyName
-    override var displayName: String? = tv?.displayName
 
     private val _status: MutableState<DeviceStatus> =
         mutableStateOf(if (device.isConnected) DeviceStatus.CONNECTED else DeviceStatus.DISCONNECTED)

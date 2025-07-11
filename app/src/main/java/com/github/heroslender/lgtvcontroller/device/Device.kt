@@ -1,17 +1,23 @@
 package com.github.heroslender.lgtvcontroller.device
 
+import com.github.heroslender.lgtvcontroller.domain.model.App
+import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import kotlinx.coroutines.flow.Flow
 
 interface Device {
+    val tv: Tv
+
     val id: String
+        get() = tv.id
 
     val friendlyName: String
-    val displayName: String?
+        get() = tv.name
+    val displayName: Flow<String?>
 
     val status: Flow<DeviceStatus>
 
-    val apps: Flow<List<LgAppInfo>>
-    val inputs: Flow<List<LgAppInfo>>
+    val apps: Flow<List<App>>
+    val inputs: Flow<List<App>>
 
     fun hasCapability(capability: String): Boolean
 

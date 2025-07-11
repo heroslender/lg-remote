@@ -48,7 +48,8 @@ import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
-import com.github.heroslender.lgtvcontroller.device.LgAppInfo
+import com.github.heroslender.lgtvcontroller.domain.model.App
+import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -482,10 +483,11 @@ fun Device?.hasCapability(capability: String) = this?.hasCapability(capability) 
 object PreviewDevice : Device {
     override val id: String = "gads-sdgfds-g-fdsgfdgdf-sdfsdf"
     override val friendlyName: String = "Living Room TV"
-    override val displayName: String? = null
+    override val displayName: Flow<String?> = flowOf("Living Room TV")
+    override val tv: Tv = Tv(id, friendlyName, "Living Room TV", emptyList(), emptyList())
     override val status: Flow<DeviceStatus> = flowOf(DeviceStatus.CONNECTED)
-    override val apps: Flow<List<LgAppInfo>> = flowOf(emptyList())
-    override val inputs: Flow<List<LgAppInfo>> = flowOf(emptyList())
+    override val apps: Flow<List<App>> = flowOf(emptyList())
+    override val inputs: Flow<List<App>> = flowOf(emptyList())
 
     override fun hasCapability(capability: String): Boolean = true
     override fun powerOff() {}

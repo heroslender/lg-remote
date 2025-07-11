@@ -24,7 +24,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
@@ -66,8 +65,6 @@ fun TvEditScreen(
     tvEditViewModel: TvEditViewModel = hiltViewModel(),
     navigateBack: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-
     Scaffold(
         topBar = {
             ControllerTopAppBar(
@@ -80,10 +77,8 @@ fun TvEditScreen(
             uiState = tvEditViewModel.tvUiState,
             onValueChange = tvEditViewModel::updateUiState,
             onSave = {
-                scope.launch {
-                    tvEditViewModel.save()
-                    navigateBack()
-                }
+                tvEditViewModel.save()
+                navigateBack()
             },
             modifier = Modifier
                 .padding(innerPadding)

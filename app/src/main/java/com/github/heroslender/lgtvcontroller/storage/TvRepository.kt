@@ -1,5 +1,6 @@
 package com.github.heroslender.lgtvcontroller.storage
 
+import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import kotlinx.coroutines.flow.Flow
 
 interface TvRepository {

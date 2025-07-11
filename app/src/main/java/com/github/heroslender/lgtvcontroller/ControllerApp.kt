@@ -66,7 +66,7 @@ fun ControllerTopAppBar(
             modifier = modifier,
             actions = actions,
             scrollBehavior = scrollBehavior,
-            navigationIcon = navigationIcon ,
+            navigationIcon = navigationIcon,
         )
     }
 }

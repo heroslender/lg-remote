@@ -22,3 +22,6 @@
 
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn javax.lang.model.element.Modifier
+
+-dontwarn org.conscrypt.Conscrypt
+-dontwarn org.conscrypt.OpenSSLProvider
