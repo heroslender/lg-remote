@@ -2,6 +2,7 @@ package com.github.heroslender.lgtvcontroller.storage
 
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.storage.entity.AppList
+import com.github.heroslender.lgtvcontroller.storage.entity.InputList
 import com.github.heroslender.lgtvcontroller.storage.entity.TvEntity
 
 fun TvEntity.toDomain(): Tv {
@@ -20,6 +21,6 @@ fun Tv.toEntity(): TvEntity {
         name = name,
         displayName = displayName,
         appList = AppList(apps),
-        inputList = AppList(inputs)
+        inputList = InputList(inputs)
     )
 }

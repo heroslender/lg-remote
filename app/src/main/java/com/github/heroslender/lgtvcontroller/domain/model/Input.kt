@@ -1,6 +1,6 @@
 package com.github.heroslender.lgtvcontroller.domain.model
 
-data class App(
+data class Input(
     /**
      * App ID
      */
@@ -11,10 +11,9 @@ data class App(
     val name: String,
     /**
      * App icon URL hosted by the TV, requires ssl check to be disabled
+     * Icon size: 80x80
      */
     val icon: String = "",
-    /**
-     * Timestamp the app was installed, 0 for pre-installed apps
-     */
-    val installedTime: Long = 0,
+    val connected: Boolean = false,
+    val favorite: Boolean = false,
 )

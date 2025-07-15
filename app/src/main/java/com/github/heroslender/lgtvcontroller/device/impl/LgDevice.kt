@@ -1,21 +1,24 @@
 package com.github.heroslender.lgtvcontroller.device.impl
 
 import com.connectsdk.core.AppInfo
+import com.connectsdk.core.ExternalInputInfo
 import com.connectsdk.service.WebOSTVService
+import com.connectsdk.service.capability.ExternalInputControl
 import com.connectsdk.service.capability.Launcher
 import com.connectsdk.service.command.ServiceCommandError
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.App
+import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.utils.sendSpecialKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import org.json.JSONArray
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class LgDevice(
     val device: LgNetworkDevice,
@@ -35,9 +38,9 @@ class LgDevice(
     override val apps: StateFlow<List<App>>
         get() = _apps
 
-    private val _inputs: MutableStateFlow<List<App>> =
+    private val _inputs: MutableStateFlow<List<Input>> =
         MutableStateFlow(tv.inputs)
-    override val inputs: StateFlow<List<App>>
+    override val inputs: StateFlow<List<Input>>
         get() = _inputs
 
     override val id: String
@@ -145,35 +148,34 @@ class LgDevice(
         _status.value = status
     }
 
-    suspend fun loadAppsAndSources() {
-        val launchPointsState = MutableStateFlow<List<App>>(emptyList())
-        val webOSTVService = device.device.getServiceByName(WebOSTVService.ID) as WebOSTVService
-        webOSTVService.getLaunchPoints(object : WebOSTVService.LaunchPointsListener {
-            override fun onSuccess(arr: JSONArray) {
-                val list = mutableListOf<App>()
-                for (i in 0 until arr.length()) {
-                    val raw = arr.getJSONObject(i)
-                    if (raw.getBoolean("systemApp"))
-                        continue
-
-                    list.add(
-                        App(
-                            id = raw.getString("id"),
-                            name = raw.getString("title"),
-                            icon = raw.getString("icon"),
-                            iconLarge = raw.getString("largeIcon"),
+    suspend fun getExternalInputList(): List<Input> = suspendCoroutine { continuation ->
+        device.device.externalInputControl.getExternalInputList(object :
+            ExternalInputControl.ExternalInputListListener {
+            override fun onSuccess(discoveredInputs: List<ExternalInputInfo>) {
+                println(discoveredInputs.map { it.toJSONObject().toString(2) })
+                val inputs = mutableListOf<Input>()
+                for (info in discoveredInputs) {
+                    inputs.add(
+                        Input(
+                            id = info.id,
+                            name = info.name,
+                            icon = info.iconURL,
+                            connected = info.isConnected,
+                            favorite = info.rawData.optBoolean("favorite", false)
                         )
                     )
                 }
 
-                launchPointsState.value = list
+                continuation.resume(inputs)
             }
 
             override fun onError(error: ServiceCommandError) {
-                TODO("Not yet implemented")
+                continuation.resume(emptyList())
             }
         })
+    }
 
+    suspend fun getAppList(): List<App> {
         data class AppListApp(
             val id: String,
             val name: String,
@@ -181,58 +183,74 @@ class LgDevice(
             val installedTime: Long,
         )
 
-        val appListState = MutableStateFlow<List<AppListApp>>(emptyList())
-        device.device.launcher.getAppList(object : Launcher.AppListListener {
-            override fun onSuccess(apps: List<AppInfo>) {
-                val appList = mutableListOf<AppListApp>()
-                apps.forEach {
-                    appList.add(
-                        AppListApp(
-                            id = it.id,
-                            name = it.name,
-                            systemApp = it.rawData.getBoolean("systemApp"),
-                            installedTime = it.rawData.getLong("installedTime"),
+        val appList: MutableList<AppListApp> = suspendCoroutine { cont ->
+            device.device.launcher.getAppList(object : Launcher.AppListListener {
+                override fun onSuccess(apps: List<AppInfo>) {
+                    val appList = mutableListOf<AppListApp>()
+                    apps.forEach {
+                        appList.add(
+                            AppListApp(
+                                id = it.id,
+                                name = it.name,
+                                systemApp = it.rawData.getBoolean("systemApp"),
+                                installedTime = it.rawData.getLong("installedTime"),
+                            )
                         )
-                    )
-                }
-
-                appListState.value = appList
-            }
-
-            override fun onError(error: ServiceCommandError?) {
-                TODO("Not yet implemented")
-            }
-        })
-
-        combine(launchPointsState, appListState) { launchPointsFound, appListFound ->
-            if (launchPointsFound.isEmpty() || appListFound.isEmpty()) {
-                return@combine
-            }
-
-            val appList = mutableListOf<App>()
-            val inputList = mutableListOf<App>()
-
-            launchPointsFound.forEach { app ->
-                val found = appListFound.firstOrNull { it.id == app.id }
-                if (found != null) {
-                    val appInfo = app.copy(installedTime = found.installedTime)
-                    if (found.systemApp) {
-                        inputList.add(appInfo)
-                    } else {
-                        appList.add(appInfo)
                     }
+
+                    cont.resume(appList)
                 }
-            }
 
-            appList.sortByDescending { it.installedTime }
+                override fun onError(error: ServiceCommandError?) {
+                    cont.resume(mutableListOf())
+                }
+            })
+        }
 
-            tv.apps = appList
-            tv.inputs = inputList
-            _apps.value = appList
-            _inputs.value = inputList
+        return suspendCoroutine { continuation ->
+            val webOSTVService = device.device.getServiceByName(WebOSTVService.ID) as WebOSTVService
+            webOSTVService.getLaunchPoints(object : WebOSTVService.LaunchPointsListener {
+                override fun onSuccess(arr: JSONArray) {
+                    val list = mutableListOf<App>()
+                    for (i in 0 until arr.length()) {
+                        val raw = arr.getJSONObject(i)
+                        if (raw.getBoolean("systemApp"))
+                            continue
 
-            manager.updateTv(tv)
-        }.collect()
+                        val id = raw.getString("id")
+                        val found = appList.firstOrNull { it.id == id }
+                        if (found != null && !found.systemApp) {
+                            list.add(
+                                App(
+                                    id = found.id,
+                                    name = found.name,
+                                    icon = raw.getString("largeIcon"),
+                                    installedTime = found.installedTime,
+                                )
+                            )
+                        }
+                    }
+
+                    continuation.resume(list)
+                }
+
+                override fun onError(error: ServiceCommandError) {
+                    continuation.resume(emptyList())
+                }
+            })
+        }
+    }
+
+    suspend fun loadAppsAndInputs() {
+        val inputList = getExternalInputList()
+        tv.inputs = inputList
+        _inputs.value = inputList
+
+        val appList = getAppList().sortedByDescending { it.installedTime }
+        tv.apps = appList
+        _apps.value = appList
+
+        manager.updateTv(tv)
     }
 
     fun updateDisplayName() {

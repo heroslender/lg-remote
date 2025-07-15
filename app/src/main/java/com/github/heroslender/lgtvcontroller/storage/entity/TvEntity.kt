@@ -10,5 +10,5 @@ data class TvEntity(
     val name: String,
     var displayName: String?,
     var appList: AppList,
-    var inputList: AppList,
+    var inputList: InputList,
 )

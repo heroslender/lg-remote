@@ -49,6 +49,7 @@ import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.App
+import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlinx.coroutines.flow.Flow
@@ -487,7 +488,7 @@ object PreviewDevice : Device {
     override val tv: Tv = Tv(id, friendlyName, "Living Room TV", emptyList(), emptyList())
     override val status: Flow<DeviceStatus> = flowOf(DeviceStatus.CONNECTED)
     override val apps: Flow<List<App>> = flowOf(emptyList())
-    override val inputs: Flow<List<App>> = flowOf(emptyList())
+    override val inputs: Flow<List<Input>> = flowOf(emptyList())
 
     override fun hasCapability(capability: String): Boolean = true
     override fun powerOff() {}

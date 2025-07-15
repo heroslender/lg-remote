@@ -5,5 +5,5 @@ data class Tv(
     val name: String = "",
     var displayName: String? = "",
     var apps: List<App> = emptyList(),
-    var inputs: List<App> = emptyList(),
+    var inputs: List<Input> = emptyList(),
 )

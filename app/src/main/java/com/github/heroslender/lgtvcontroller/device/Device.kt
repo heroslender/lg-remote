@@ -1,6 +1,7 @@
 package com.github.heroslender.lgtvcontroller.device
 
 import com.github.heroslender.lgtvcontroller.domain.model.App
+import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import kotlinx.coroutines.flow.Flow
 
@@ -17,7 +18,7 @@ interface Device {
     val status: Flow<DeviceStatus>
 
     val apps: Flow<List<App>>
-    val inputs: Flow<List<App>>
+    val inputs: Flow<List<Input>>
 
     fun hasCapability(capability: String): Boolean
 

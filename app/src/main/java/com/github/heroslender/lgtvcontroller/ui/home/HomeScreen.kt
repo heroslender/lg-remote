@@ -70,6 +70,7 @@ import com.github.heroslender.lgtvcontroller.TopAppBarAction
 import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.App
+import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.ui.controller.ButtonShape
 import com.github.heroslender.lgtvcontroller.ui.controller.CIconButton
 import com.github.heroslender.lgtvcontroller.ui.controller.CTextButton
@@ -95,13 +96,13 @@ fun HomePreview(
             ?: DeviceStatus.DISCONNECTED,
         isFavorite = isFavorite,
         apps = listOf(
-            App(id = "asd", name = "YouTube"),
-            App(id = "asdd", name = "Netflix"),
+            App(id = "asd", name = "YouTube", icon = "a"),
+            App(id = "asdd", name = "Netflix", icon = "a"),
         ),
         inputs = listOf(
-            App(id = "asd", name = "HDMI1"),
-            App(id = "asdd", name = "HDMI2"),
-            App(id = "asdd", name = "SCART"),
+            Input(id = "asd", name = "HDMI1", icon = "a"),
+            Input(id = "asdd", name = "HDMI2", icon = "a"),
+            Input(id = "asdd", name = "SCART", icon = "a"),
         )
     )
 
@@ -321,7 +322,7 @@ fun AppsCard(
                 modifier = Modifier.size(96.dp),
             ) {
                 GlideSubcomposition(
-                    model = CustomGlideUrl(appInfo.iconLarge, appInfo.name),
+                    model = CustomGlideUrl(appInfo.icon, appInfo.name),
                     modifier = Modifier
                         .weight(1F)
                         .aspectRatio(1F, true)
@@ -342,7 +343,12 @@ fun AppsCard(
                                 .aspectRatio(1F, true)
                         )
 
-                        RequestState.Failure -> TODO()
+                        RequestState.Failure -> CircularProgressIndicator(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .weight(1F)
+                                .aspectRatio(1F, true)
+                        )
                     }
                 }
             }
@@ -353,7 +359,7 @@ fun AppsCard(
 class CustomGlideUrl(
     url: String,
     val cacheName: String,
-) : GlideUrl(url) {
+) : GlideUrl(url.ifEmpty { "Not Found" }) {
     override fun getCacheKey(): String? {
         return cacheName
     }
@@ -362,8 +368,8 @@ class CustomGlideUrl(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun InputsCard(
-    inputs: List<App>,
-    switchInput: (App) -> Unit,
+    inputs: List<Input>,
+    switchInput: (Input) -> Unit,
 ) {
     ScrollContentCard(
         iconVector = Filled.ElectricalServices,
@@ -383,7 +389,7 @@ fun InputsCard(
                         .height(96.dp)
                 ) {
                     GlideSubcomposition(
-                        model = CustomGlideUrl(appInfo.iconLarge, appInfo.name),
+                        model = CustomGlideUrl(appInfo.icon, appInfo.name),
                         modifier = Modifier
                             .weight(1F)
                             .aspectRatio(1F, true)
@@ -404,7 +410,12 @@ fun InputsCard(
                                     .aspectRatio(1F, true)
                             )
 
-                            RequestState.Failure -> TODO()
+                            RequestState.Failure -> CircularProgressIndicator(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .weight(1F)
+                                    .aspectRatio(1F, true)
+                            )
                         }
                     }
 

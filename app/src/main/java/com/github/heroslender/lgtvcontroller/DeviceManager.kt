@@ -103,7 +103,7 @@ class DeviceManager(
         networkDevice.updateStatus(DeviceStatus.CONNECTED)
 
         scope.launch {
-            (device as LgDevice).loadAppsAndSources()
+            (device as LgDevice).loadAppsAndInputs()
         }
     }
 
