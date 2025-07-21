@@ -489,6 +489,7 @@ object PreviewDevice : Device {
     override val status: Flow<DeviceStatus> = flowOf(DeviceStatus.CONNECTED)
     override val apps: Flow<List<App>> = flowOf(emptyList())
     override val inputs: Flow<List<Input>> = flowOf(emptyList())
+    override val runningApp: Flow<String> = flowOf("")
 
     override fun hasCapability(capability: String): Boolean = true
     override fun powerOff() {}

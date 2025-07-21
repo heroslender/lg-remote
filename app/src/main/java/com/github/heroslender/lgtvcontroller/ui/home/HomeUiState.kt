@@ -12,4 +12,5 @@ data class HomeUiState(
     val isFavorite: Boolean = false,
     val apps: List<App> = emptyList(),
     val inputs: List<Input> = emptyList(),
+    val runningApp: String = "",
 )

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -16,8 +17,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,7 +37,6 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -48,9 +49,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -94,15 +101,16 @@ fun HomePreview(
         deviceName = device?.friendlyName,
         deviceStatus = device?.let { runBlocking { it.status.first() } }
             ?: DeviceStatus.DISCONNECTED,
+        runningApp = "netflix",
         isFavorite = isFavorite,
         apps = listOf(
-            App(id = "asd", name = "YouTube", icon = "a"),
-            App(id = "asdd", name = "Netflix", icon = "a"),
+            App(id = "youtube", name = "YouTube Yoyu YOuY asd", icon = "a"),
+            App(id = "netflix", name = "Netflix", icon = "a"),
         ),
         inputs = listOf(
-            Input(id = "asd", name = "HDMI1", icon = "a"),
-            Input(id = "asdd", name = "HDMI2", icon = "a"),
-            Input(id = "asdd", name = "SCART", icon = "a"),
+            Input(id = "hdmi1", name = "HDMI1", icon = "a"),
+            Input(id = "hdmi2", name = "HDMI2", icon = "a", connected = true),
+            Input(id = "scart", name = "SCART", icon = "a"),
         )
     )
 
@@ -112,7 +120,15 @@ fun HomePreview(
             topBar = {
                 ControllerTopAppBar(
                     title = uiState.deviceName ?: "",
-                    subtitle = stringResource(uiState.deviceStatus.nameResId),
+                    subtitle = buildAnnotatedString {
+                        if (uiState.deviceStatus == DeviceStatus.CONNECTED) {
+                            withStyle(style = SpanStyle(color = colorResource(R.color.connected))) {
+                                append("● ")
+                            }
+                        }
+
+                        append(stringResource(uiState.deviceStatus.nameResId))
+                    },
                     titleHorizontalAlignment = Alignment.CenterHorizontally,
                     navigateUp = { },
                     actions = {
@@ -140,9 +156,9 @@ fun HomePreview(
             ) {
                 ControllerShortcutsCard(uiState.device, {})
 
-                AppsCard(uiState.apps, {})
+                AppsCard(uiState.apps, uiState.runningApp, {})
 
-                InputsCard(uiState.inputs, {})
+                InputsCard(uiState.inputs, uiState.runningApp, {})
             }
         }
     }
@@ -164,7 +180,15 @@ fun HomeScreen(
         topBar = {
             ControllerTopAppBar(
                 title = uiState.deviceName ?: "",
-                subtitle = stringResource(uiState.deviceStatus.nameResId),
+                subtitle = buildAnnotatedString {
+                    if (uiState.deviceStatus == DeviceStatus.CONNECTED) {
+                        withStyle(style = SpanStyle(color = colorResource(R.color.connected))) {
+                            append("● ")
+                        }
+                    }
+
+                    append(stringResource(uiState.deviceStatus.nameResId))
+                },
                 titleHorizontalAlignment = Alignment.CenterHorizontally,
                 navigateUp = navigateToDeviceList,
                 actions = {
@@ -201,6 +225,7 @@ fun HomeScreen(
 
             AppsCard(
                 apps = uiState.apps,
+                runningApp = uiState.runningApp,
                 openApp = { app ->
                     uiState.device?.launchApp(app.id)
                 }
@@ -208,6 +233,7 @@ fun HomeScreen(
 
             InputsCard(
                 inputs = uiState.inputs,
+                runningApp = uiState.runningApp,
                 switchInput = { input ->
                     uiState.device?.launchApp(input.id)
                 }
@@ -309,6 +335,7 @@ fun ColumnScope.VolumeControls(
 @Composable
 fun AppsCard(
     apps: List<App>,
+    runningApp: String,
     openApp: (App) -> Unit,
 ) {
     ScrollContentCard(
@@ -316,40 +343,65 @@ fun AppsCard(
         header = stringResource(string.apps_card_title),
     ) {
         for (appInfo in apps) {
-            IconButton(
+            TextButton(
                 onClick = { openApp(appInfo) },
                 shape = IconButtonDefaults.smallSquareShape,
-                modifier = Modifier.size(96.dp),
+                modifier = Modifier
+                    .height(96.dp)
+                    .width(IntrinsicSize.Min),
+                colors = if (appInfo.id == runningApp) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
+                contentPadding = PaddingValues(6.dp),
             ) {
-                GlideSubcomposition(
-                    model = CustomGlideUrl(appInfo.icon, appInfo.name),
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
-                        .weight(1F)
-                        .aspectRatio(1F, true)
+                        .height(96.dp)
                 ) {
-                    when (state) {
-                        RequestState.Loading -> CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .weight(1F)
-                                .aspectRatio(1F, true)
-                        )
+                    GlideSubcomposition(
+                        model = CustomGlideUrl(appInfo.icon, appInfo.name),
+                        modifier = Modifier
+                            .weight(1F)
+                            .aspectRatio(1F, true)
+                    ) {
+                        when (state) {
+                            RequestState.Loading -> CircularProgressIndicator(
+                                color = if (appInfo.id == runningApp) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .weight(1F)
+                                    .aspectRatio(1F, true)
+                            )
 
-                        is RequestState.Success -> Image(
-                            painter = painter,
-                            contentDescription = appInfo.name,
-                            modifier = Modifier
-                                .weight(1F)
-                                .aspectRatio(1F, true)
-                        )
+                            is RequestState.Success -> Image(
+                                painter = painter,
+                                contentDescription = appInfo.name,
+                                modifier = Modifier
+                                    .weight(1F)
+                                    .aspectRatio(1F, true)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
 
-                        RequestState.Failure -> CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .weight(1F)
-                                .aspectRatio(1F, true)
-                        )
+                            RequestState.Failure -> CircularProgressIndicator(
+                                color = if (appInfo.id == runningApp) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .weight(1F)
+                                    .aspectRatio(1F, true)
+                            )
+                        }
                     }
+
+                    Text(
+                        text = appInfo.name,
+                        modifier = Modifier,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = LocalTextStyle.current.fontSize * .8,
+                            maxFontSize = LocalTextStyle.current.fontSize
+                        ),
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
                 }
             }
         }
@@ -369,6 +421,7 @@ class CustomGlideUrl(
 @Composable
 fun InputsCard(
     inputs: List<Input>,
+    runningApp: String,
     switchInput: (Input) -> Unit,
 ) {
     ScrollContentCard(
@@ -380,7 +433,7 @@ fun InputsCard(
                 onClick = { switchInput(appInfo) },
                 shape = IconButtonDefaults.smallSquareShape,
                 modifier = Modifier.height(96.dp),
-                colors = ButtonDefaults.outlinedButtonColors(),
+                colors = if (appInfo.id == runningApp) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
                 contentPadding = PaddingValues(6.dp),
             ) {
                 Column(
@@ -396,6 +449,7 @@ fun InputsCard(
                     ) {
                         when (state) {
                             RequestState.Loading -> CircularProgressIndicator(
+                                color = if (appInfo.id == runningApp) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .padding(8.dp)
                                     .weight(1F)
@@ -411,6 +465,7 @@ fun InputsCard(
                             )
 
                             RequestState.Failure -> CircularProgressIndicator(
+                                color = if (appInfo.id == runningApp) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .padding(8.dp)
                                     .weight(1F)
@@ -420,7 +475,15 @@ fun InputsCard(
                     }
 
                     Text(
-                        text = appInfo.name,
+                        text = buildAnnotatedString {
+                            if (appInfo.connected) {
+                                withStyle(style = SpanStyle(color = colorResource(R.color.connected))) {
+                                    append("● ")
+                                }
+                            }
+
+                            append(appInfo.name)
+                        },
                         modifier = Modifier,
                         autoSize = TextAutoSize.StepBased(
                             minFontSize = 8.sp,

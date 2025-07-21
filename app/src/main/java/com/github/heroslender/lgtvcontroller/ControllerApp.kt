@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.github.heroslender.lgtvcontroller.R.string
@@ -32,7 +33,7 @@ fun ControllerApp(navController: NavHostController = rememberNavController()) {
 @Composable
 fun ControllerTopAppBar(
     title: String,
-    subtitle: String? = null,
+    subtitle: AnnotatedString? = null,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     titleHorizontalAlignment: Alignment.Horizontal = Alignment.Start,

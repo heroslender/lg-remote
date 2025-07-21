@@ -20,6 +20,8 @@ interface Device {
     val apps: Flow<List<App>>
     val inputs: Flow<List<Input>>
 
+    val runningApp: Flow<String>
+
     fun hasCapability(capability: String): Boolean
 
     fun powerOff()

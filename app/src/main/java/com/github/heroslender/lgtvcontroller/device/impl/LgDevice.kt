@@ -43,6 +43,11 @@ class LgDevice(
     override val inputs: StateFlow<List<Input>>
         get() = _inputs
 
+    private val _runningApp: MutableStateFlow<String> =
+        MutableStateFlow("")
+    override val runningApp: StateFlow<String>
+        get() = _runningApp
+
     override val id: String
         get() = device.id
 
@@ -152,12 +157,11 @@ class LgDevice(
         device.device.externalInputControl.getExternalInputList(object :
             ExternalInputControl.ExternalInputListListener {
             override fun onSuccess(discoveredInputs: List<ExternalInputInfo>) {
-                println(discoveredInputs.map { it.toJSONObject().toString(2) })
                 val inputs = mutableListOf<Input>()
                 for (info in discoveredInputs) {
                     inputs.add(
                         Input(
-                            id = info.id,
+                            id = info.rawData.getString("appId"),
                             name = info.name,
                             icon = info.iconURL,
                             connected = info.isConnected,
@@ -241,6 +245,17 @@ class LgDevice(
         }
     }
 
+    fun subscribeRunningApp() {
+        device.device.launcher.subscribeRunningApp(object : Launcher.AppInfoListener {
+            override fun onSuccess(appInfo: AppInfo) {
+                _runningApp.tryEmit(appInfo.id)
+            }
+
+            override fun onError(error: ServiceCommandError) {
+            }
+        })
+    }
+
     suspend fun loadAppsAndInputs() {
         val inputList = getExternalInputList()
         tv.inputs = inputList
@@ -251,6 +266,8 @@ class LgDevice(
         _apps.value = appList
 
         manager.updateTv(tv)
+
+        subscribeRunningApp()
     }
 
     fun updateDisplayName() {

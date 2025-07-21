@@ -5,12 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,35 +18,84 @@ class HomeViewModel @Inject constructor(
     private val deviceManager: DeviceManager,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
-    val uiState: StateFlow<HomeUiState> =
-        deviceManager.connectedDevice.flatMapLatest { device ->
-            if (device == null) {
-                return@flatMapLatest flowOf(HomeUiState())
-            }
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = _uiState
 
-            combine(
-                device.status,
-                settingsRepository.settingsFlow,
-                device.apps,
-                device.inputs,
-                device.displayName,
-            ) { deviceStatus, settings, apps, inputs, displayName ->
-                HomeUiState(
+    init {
+        deviceManager.connectedDevice.launchCollect { device ->
+            _uiState.update {
+                it.copy(
                     device = device,
-                    deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName,
-                    deviceStatus = deviceStatus,
-                    isFavorite = device.id == settings.favoriteId,
-                    apps = apps,
-                    inputs = inputs,
                 )
             }
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
+
+            if (device == null) {
+                _uiState.tryEmit(HomeUiState())
+                return@launchCollect
+            }
+
+            device.displayName.launchCollect { displayName ->
+                _uiState.update {
+                    it.copy(
+                        deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName,
+                    )
+                }
+            }
+
+            device.status.launchCollect { status ->
+                _uiState.update {
+                    it.copy(
+                        deviceStatus = status,
+                    )
+                }
+            }
+
+
+            device.apps.launchCollect { apps ->
+                _uiState.update {
+                    it.copy(
+                        apps = apps,
+                    )
+                }
+            }
+
+            device.inputs.launchCollect { inputs ->
+                _uiState.update {
+                    it.copy(
+                        inputs = inputs,
+                    )
+                }
+            }
+
+            device.runningApp.launchCollect { runningApp ->
+                _uiState.update {
+                    it.copy(
+                        runningApp = runningApp,
+                    )
+                }
+            }
+
+            settingsRepository.settingsFlow.launchCollect { settings ->
+                _uiState.update {
+                    it.copy(
+                        isFavorite = device.id == settings.favoriteId,
+                    )
+                }
+            }
+        }
+    }
 
     fun setFavorite(isFavorite: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateFavoriteId(
                 if (isFavorite) deviceManager.connectedDevice.value?.id ?: "" else ""
             )
+        }
+    }
+
+    private fun <T> Flow<T>.launchCollect(collector: FlowCollector<T>) {
+        viewModelScope.launch {
+            collect(collector)
         }
     }
 }
