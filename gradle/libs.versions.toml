@@ -1,5 +1,5 @@
 [versions]
-agp = "8.11.0"
+agp = "8.11.1"
 connectSdkAndroidLite = "2.1.4"
 datastore = "1.1.7"
 error_prone_annotations = "2.26.1"
