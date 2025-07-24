@@ -103,7 +103,11 @@ class DeviceManager(
         networkDevice.updateStatus(DeviceStatus.CONNECTED)
 
         scope.launch {
-            (device as LgDevice).loadAppsAndInputs()
+            try {
+                (device as LgDevice).loadAppsAndInputs()
+            } catch (e: Exception) {
+                Log.e("DeviceManager", "Failed to load apps and inputs for device ${device.id}: ${e.message}")
+            }
         }
     }
 

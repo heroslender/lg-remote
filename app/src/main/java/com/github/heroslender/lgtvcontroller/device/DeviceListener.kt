@@ -47,6 +47,8 @@ class DeviceListener(
         d: ConnectableDevice,
         error: ServiceCommandError
     ) {
-        Log.d("Device", "listDevices :::: onConnectionFailed")
+        Log.e("Device", "Connection failed: ${error.message}")
+        device.updateStatus(DeviceStatus.DISCONNECTED)
+        manager.onDeviceDisconnected(device)
     }
 }

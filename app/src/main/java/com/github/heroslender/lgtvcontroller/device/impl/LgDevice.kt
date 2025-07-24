@@ -1,5 +1,6 @@
 package com.github.heroslender.lgtvcontroller.device.impl
 
+import android.util.Log
 import com.connectsdk.core.AppInfo
 import com.connectsdk.core.ExternalInputInfo
 import com.connectsdk.service.WebOSTVService
@@ -196,8 +197,8 @@ class LgDevice(
                             AppListApp(
                                 id = it.id,
                                 name = it.name,
-                                systemApp = it.rawData.getBoolean("systemApp"),
-                                installedTime = it.rawData.getLong("installedTime"),
+                                systemApp = it.rawData.optBoolean("systemApp", false),
+                                installedTime = it.rawData.optLong("installedTime", 0L),
                             )
                         )
                     }
@@ -218,7 +219,7 @@ class LgDevice(
                     val list = mutableListOf<App>()
                     for (i in 0 until arr.length()) {
                         val raw = arr.getJSONObject(i)
-                        if (raw.getBoolean("systemApp"))
+                        if (raw.optBoolean("systemApp", false))
                             continue
 
                         val id = raw.getString("id")
@@ -257,17 +258,33 @@ class LgDevice(
     }
 
     suspend fun loadAppsAndInputs() {
-        val inputList = getExternalInputList()
-        tv.inputs = inputList
-        _inputs.value = inputList
+        try {
+            val inputList = getExternalInputList()
+            tv.inputs = inputList
+            _inputs.value = inputList
+        } catch (e: Exception) {
+            Log.e("LgDevice", "Failed to load inputs: ${e.message}")
+            tv.inputs = emptyList()
+            _inputs.value = emptyList()
+        }
 
-        val appList = getAppList().sortedByDescending { it.installedTime }
-        tv.apps = appList
-        _apps.value = appList
+        try {
+            val appList = getAppList().sortedByDescending { it.installedTime }
+            tv.apps = appList
+            _apps.value = appList
+        } catch (e: Exception) {
+            Log.e("LgDevice", "Failed to load apps: ${e.message}")
+            tv.apps = emptyList()
+            _apps.value = emptyList()
+        }
 
         manager.updateTv(tv)
 
-        subscribeRunningApp()
+        try {
+            subscribeRunningApp()
+        } catch (e: Exception) {
+            Log.e("LgDevice", "Failed to subscribe to running app: ${e.message}")
+        }
     }
 
     fun updateDisplayName() {
