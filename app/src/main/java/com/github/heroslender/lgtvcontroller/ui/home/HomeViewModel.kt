@@ -24,9 +24,7 @@ class HomeViewModel @Inject constructor(
     init {
         deviceManager.connectedDevice.launchCollect { device ->
             _uiState.update {
-                it.copy(
-                    device = device,
-                )
+                it.copy(device = device,)
             }
 
             if (device == null) {
@@ -34,53 +32,29 @@ class HomeViewModel @Inject constructor(
                 return@launchCollect
             }
 
-            device.displayName.launchCollect { displayName ->
-                _uiState.update {
-                    it.copy(
-                        deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName,
-                    )
-                }
+            device.displayName.bindToState(_uiState) { state, displayName ->
+                state.copy(deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName)
             }
 
-            device.status.launchCollect { status ->
-                _uiState.update {
-                    it.copy(
-                        deviceStatus = status,
-                    )
-                }
+            device.status.bindToState(_uiState) { state, status ->
+                state.copy(deviceStatus = status)
             }
 
 
-            device.apps.launchCollect { apps ->
-                _uiState.update {
-                    it.copy(
-                        apps = apps,
-                    )
-                }
+            device.apps.bindToState(_uiState) { state, apps ->
+                state.copy(apps = apps)
             }
 
-            device.inputs.launchCollect { inputs ->
-                _uiState.update {
-                    it.copy(
-                        inputs = inputs,
-                    )
-                }
+            device.inputs.bindToState(_uiState) { state, inputs ->
+                state.copy(inputs = inputs)
             }
 
-            device.runningApp.launchCollect { runningApp ->
-                _uiState.update {
-                    it.copy(
-                        runningApp = runningApp,
-                    )
-                }
+            device.runningApp.bindToState(_uiState) { state, runningApp ->
+                state.copy(runningApp = runningApp)
             }
 
-            settingsRepository.settingsFlow.launchCollect { settings ->
-                _uiState.update {
-                    it.copy(
-                        isFavorite = device.id == settings.favoriteId,
-                    )
-                }
+            settingsRepository.settingsFlow.bindToState(_uiState) { state, settings ->
+                state.copy(isFavorite = device.id == settings.favoriteId)
             }
         }
     }
@@ -90,6 +64,14 @@ class HomeViewModel @Inject constructor(
             settingsRepository.updateFavoriteId(
                 if (isFavorite) deviceManager.connectedDevice.value?.id ?: "" else ""
             )
+        }
+    }
+
+    private fun <T, S> Flow<T>.bindToState(state: MutableStateFlow<S>, mapper: (S, T) -> S) {
+        launchCollect { value ->
+            state.update { state ->
+                mapper(state, value)
+            }
         }
     }
 
