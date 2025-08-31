@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -21,15 +23,22 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState
 
+    private val _errors = MutableSharedFlow<Snackbar>()
+    val errors: Flow<Snackbar> = _errors
+
     init {
         deviceManager.connectedDevice.launchCollect { device ->
             _uiState.update {
-                it.copy(device = device,)
+                it.copy(device = device)
             }
 
             if (device == null) {
                 _uiState.tryEmit(HomeUiState())
                 return@launchCollect
+            }
+
+            device.errors.launchCollect { snackbar ->
+                _errors.emit(snackbar)
             }
 
             device.displayName.bindToState(_uiState) { state, displayName ->

@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +47,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -83,9 +86,14 @@ import com.github.heroslender.lgtvcontroller.ui.controller.CIconButton
 import com.github.heroslender.lgtvcontroller.ui.controller.CTextButton
 import com.github.heroslender.lgtvcontroller.ui.controller.PreviewDevice
 import com.github.heroslender.lgtvcontroller.ui.controller.hasCapability
-import com.github.heroslender.lgtvcontroller.ui.icons.TvRemote
-import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
+import com.github.heroslender.lgtvcontroller.ui.icons.MyIconPack
+import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.TvRemote
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
+import com.github.heroslender.lgtvcontroller.ui.snackbar.StackedSnackbarHost
+import com.github.heroslender.lgtvcontroller.ui.snackbar.rememberStackedSnackbarHostState
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -111,59 +119,18 @@ fun HomePreview(
             Input(id = "hdmi1", name = "HDMI1", icon = "a"),
             Input(id = "hdmi2", name = "HDMI2", icon = "a", connected = true),
             Input(id = "scart", name = "SCART", icon = "a"),
-        )
+        ),
     )
 
-    LGTVControllerTheme {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = {
-                ControllerTopAppBar(
-                    title = uiState.deviceName ?: "",
-                    subtitle = buildAnnotatedString {
-                        if (uiState.deviceStatus == DeviceStatus.CONNECTED) {
-                            withStyle(style = SpanStyle(color = colorResource(R.color.connected))) {
-                                append("● ")
-                            }
-                        }
-
-                        append(stringResource(uiState.deviceStatus.nameResId))
-                    },
-                    titleHorizontalAlignment = Alignment.CenterHorizontally,
-                    navigateUp = { },
-                    actions = {
-                        TopAppBarAction(
-                            imageVector = if (uiState.isFavorite) Filled.Star else Filled.StarBorder,
-                            contentDescription = stringResource(string.favorite_button),
-                        ) { }
-
-                        TopAppBarAction(
-                            imageVector = Filled.Settings,
-                            contentDescription = stringResource(string.edit_button),
-                            enabled = uiState.device != null,
-                        ) { }
-                    },
-                )
-            }
-        ) { innerPadding ->
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                ControllerShortcutsCard(uiState.device, {})
-
-                AppsCard(uiState.apps, uiState.runningApp, {})
-
-                InputsCard(uiState.inputs, uiState.runningApp, {})
-            }
-        }
-    }
+    HomeScreen(
+        uiState = uiState,
+        errorFlow = flow {},
+        setFavorite = {},
+        navigateToDeviceList = {},
+        navigateToController = {},
+        navigateToEditDevice = {},
+    )
 }
-
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -174,6 +141,34 @@ fun HomeScreen(
     navigateToEditDevice: (String) -> Unit,
 ) {
     val uiState by homeViewModel.uiState.collectAsState()
+
+    HomeScreen(
+        uiState = uiState,
+        errorFlow = homeViewModel.errors,
+        setFavorite = homeViewModel::setFavorite,
+        navigateToDeviceList = navigateToDeviceList,
+        navigateToController = navigateToController,
+        navigateToEditDevice = navigateToEditDevice,
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    uiState: HomeUiState,
+    errorFlow: Flow<Snackbar>,
+    setFavorite: (Boolean) -> Unit,
+    navigateToDeviceList: () -> Unit,
+    navigateToController: () -> Unit,
+    navigateToEditDevice: (String) -> Unit,
+) {
+    val stackedSnackbarHostState = rememberStackedSnackbarHostState()
+
+    LaunchedEffect(errorFlow) {
+        errorFlow.collect { snackbar ->
+            stackedSnackbarHostState.showSnackbar(snackbar)
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -196,7 +191,7 @@ fun HomeScreen(
                         imageVector = if (uiState.isFavorite) Filled.Star else Filled.StarBorder,
                         contentDescription = stringResource(string.favorite_button),
                     ) {
-                        homeViewModel.setFavorite(!uiState.isFavorite)
+                        setFavorite(!uiState.isFavorite)
                     }
 
                     TopAppBarAction(
@@ -208,14 +203,14 @@ fun HomeScreen(
                     }
                 },
             )
-        }
+        },
+        snackbarHost = { StackedSnackbarHost(hostState = stackedSnackbarHostState) },
     ) { innerPadding ->
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             ControllerShortcutsCard(
@@ -249,7 +244,7 @@ fun ControllerShortcutsCard(
     navigateToController: () -> Unit,
 ) {
     ContentCard(
-        iconVector = TvRemote,
+        iconVector = MyIconPack.TvRemote,
         header = stringResource(string.controller_card_title),
         openCard = if (device != null) navigateToController else null
     ) {
@@ -520,18 +515,17 @@ fun ScrollContentCard(
 }
 
 @Composable
-fun ContentCard(
+fun Card(
     iconVector: ImageVector,
     header: String,
+    colors: CardColors = CardDefaults.elevatedCardColors(),
+    openCardIcon: ImageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
     openCard: (() -> Unit)? = null,
-    content: @Composable BoxScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val cardContent: @Composable ColumnScope.() -> Unit = {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(vertical = 16.dp)
-        ) {
-            Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Column {
+            Row(modifier = Modifier.padding(16.dp)) {
                 Icon(
                     imageVector = iconVector,
                     contentDescription = header,
@@ -546,25 +540,52 @@ fun ContentCard(
                     Spacer(Modifier.weight(1F))
 
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        imageVector = openCardIcon,
                         contentDescription = null,
                     )
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                content = content
-            )
+            content()
         }
     }
 
     if (openCard != null) {
-        ElevatedCard(onClick = openCard, content = cardContent)
+        ElevatedCard(
+            modifier = Modifier.padding(top = 16.dp),
+            onClick = openCard,
+            colors = colors,
+            content = cardContent
+        )
     } else {
-        ElevatedCard(content = cardContent)
+        ElevatedCard(
+            modifier = Modifier.padding(top = 16.dp),
+            colors = colors,
+            content = cardContent
+        )
+    }
+}
+
+@Composable
+fun ContentCard(
+    iconVector: ImageVector,
+    header: String,
+    colors: CardColors = CardDefaults.elevatedCardColors(),
+    openCard: (() -> Unit)? = null,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Card(
+        iconVector = iconVector,
+        header = header,
+        colors = colors,
+        openCard = openCard,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            content = content
+        )
     }
 }
 

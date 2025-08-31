@@ -27,6 +27,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -51,8 +52,11 @@ import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.App
 import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
-import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
+import com.github.heroslender.lgtvcontroller.ui.snackbar.StackedSnackbarHost
+import com.github.heroslender.lgtvcontroller.ui.snackbar.rememberStackedSnackbarHostState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -92,34 +96,11 @@ fun ControllerScreenPreview(
         isFavorite = isFavorite
     )
 
-    LGTVControllerTheme {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = {
-                ControllerTopAppBar(
-                    title = stringResource(R.string.controller_title),
-                    navigateUp = {},
-                )
-            }
-        ) { innerPadding ->
-            Column(
-                verticalArrangement = Arrangement.spacedBy(ControlsSpacing),
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-                    .padding(horizontal = 36.dp, vertical = 4.dp)
-            ) {
-                Header(
-                    device = controllerUiState.device,
-                    deviceName = controllerUiState.deviceName,
-                    deviceStatus = controllerUiState.deviceStatus,
-                    navigateToDeviceList = { },
-                )
-
-                Controls(controllerUiState.device)
-            }
-        }
-    }
+    ControllerScreen(
+        controllerUiState = controllerUiState,
+        errorFlow = emptyFlow(),
+        navigateUp = {}
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,6 +109,30 @@ fun ControllerScreen(
     controllerViewModel: ControllerViewModel = hiltViewModel(),
     navigateUp: () -> Unit,
 ) {
+    val controllerUiState by controllerViewModel.uiState.collectAsState()
+
+    ControllerScreen(
+        controllerUiState,
+        controllerViewModel.errors,
+        navigateUp,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ControllerScreen(
+    controllerUiState: ControllerUiState,
+    errorFlow: Flow<Snackbar>,
+    navigateUp: () -> Unit,
+) {
+    val stackedSnackbarHostState = rememberStackedSnackbarHostState()
+
+    LaunchedEffect(errorFlow) {
+        errorFlow.collect { snackbar ->
+            stackedSnackbarHostState.showSnackbar(snackbar)
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -135,7 +140,8 @@ fun ControllerScreen(
                 title = stringResource(R.string.controller_title),
                 navigateUp = navigateUp,
             )
-        }
+        },
+        snackbarHost = { StackedSnackbarHost(hostState = stackedSnackbarHostState) },
     ) { innerPadding ->
         Column(
             verticalArrangement = Arrangement.spacedBy(ControlsSpacing),
@@ -144,7 +150,6 @@ fun ControllerScreen(
                 .fillMaxSize()
                 .padding(horizontal = 32.dp, vertical = 16.dp)
         ) {
-            val controllerUiState by controllerViewModel.uiState.collectAsState()
             Header(
                 device = controllerUiState.device,
                 deviceName = controllerUiState.deviceName,
@@ -490,6 +495,7 @@ object PreviewDevice : Device {
     override val apps: Flow<List<App>> = flowOf(emptyList())
     override val inputs: Flow<List<Input>> = flowOf(emptyList())
     override val runningApp: Flow<String> = flowOf("")
+    override val errors: Flow<Snackbar> = flowOf()
 
     override fun hasCapability(capability: String): Boolean = true
     override fun powerOff() {}

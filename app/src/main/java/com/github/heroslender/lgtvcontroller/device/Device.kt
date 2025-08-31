@@ -3,6 +3,7 @@ package com.github.heroslender.lgtvcontroller.device
 import com.github.heroslender.lgtvcontroller.domain.model.App
 import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import kotlinx.coroutines.flow.Flow
 
 interface Device {
@@ -21,6 +22,8 @@ interface Device {
     val inputs: Flow<List<Input>>
 
     val runningApp: Flow<String>
+
+    val errors: Flow<Snackbar>
 
     fun hasCapability(capability: String): Boolean
 

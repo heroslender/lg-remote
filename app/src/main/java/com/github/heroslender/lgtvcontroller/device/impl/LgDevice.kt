@@ -13,8 +13,10 @@ import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.App
 import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import com.github.heroslender.lgtvcontroller.utils.sendSpecialKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONArray
@@ -58,6 +60,9 @@ class LgDevice(
     private val _displayName: MutableStateFlow<String?> = MutableStateFlow(tv.displayName)
     override val displayName: Flow<String?>
         get() = _displayName
+
+    private val _errors = MutableSharedFlow<Snackbar>()
+    override val errors: Flow<Snackbar> = _errors
 
     val service
         get() = device.device.getServiceByName(WebOSTVService.ID) as WebOSTVService
@@ -175,6 +180,7 @@ class LgDevice(
             }
 
             override fun onError(error: ServiceCommandError) {
+                _errors.tryEmit(Snackbar.error("Failed to load inputs from TV", error.message))
                 continuation.resume(emptyList())
             }
         })
@@ -206,7 +212,8 @@ class LgDevice(
                     cont.resume(appList)
                 }
 
-                override fun onError(error: ServiceCommandError?) {
+                override fun onError(error: ServiceCommandError) {
+                    _errors.tryEmit(Snackbar.error("Failed to load app list from TV", error.message))
                     cont.resume(mutableListOf())
                 }
             })
@@ -240,6 +247,7 @@ class LgDevice(
                 }
 
                 override fun onError(error: ServiceCommandError) {
+                    _errors.tryEmit(Snackbar.error("Failed to load launch points from TV", error.message))
                     continuation.resume(emptyList())
                 }
             })
@@ -264,6 +272,7 @@ class LgDevice(
             _inputs.value = inputList
         } catch (e: Exception) {
             Log.e("LgDevice", "Failed to load inputs: ${e.message}")
+            _errors.tryEmit(Snackbar.error("Failed to load inputs", e.message))
             tv.inputs = emptyList()
             _inputs.value = emptyList()
         }
@@ -274,6 +283,7 @@ class LgDevice(
             _apps.value = appList
         } catch (e: Exception) {
             Log.e("LgDevice", "Failed to load apps: ${e.message}")
+            _errors.tryEmit(Snackbar.error("Failed to load apps", e.message))
             tv.apps = emptyList()
             _apps.value = emptyList()
         }
@@ -284,6 +294,7 @@ class LgDevice(
             subscribeRunningApp()
         } catch (e: Exception) {
             Log.e("LgDevice", "Failed to subscribe to running app: ${e.message}")
+            _errors.tryEmit(Snackbar.error("Failed to subscribe to running app", e.message))
         }
     }
 

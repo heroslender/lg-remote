@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -38,6 +42,14 @@ class ControllerViewModel @Inject constructor(
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, ControllerUiState())
+
+    val errors: Flow<Snackbar> = deviceManager.connectedDevice.flatMapConcat { device ->
+        if (device == null) {
+            return@flatMapConcat emptyFlow()
+        }
+
+        device.errors
+    }
 
     fun setFavorite(isFavorite: Boolean) {
         viewModelScope.launch {

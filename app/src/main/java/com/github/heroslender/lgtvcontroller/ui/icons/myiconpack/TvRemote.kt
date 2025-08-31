@@ -1,4 +1,4 @@
-package com.github.heroslender.lgtvcontroller.ui.icons
+package com.github.heroslender.lgtvcontroller.ui.icons.myiconpack
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -15,8 +15,9 @@ import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.github.heroslender.lgtvcontroller.ui.icons.MyIconPack
 
-val TvRemote: ImageVector
+val MyIconPack.TvRemote: ImageVector
     get() {
         if (_tvRemote != null) {
             return _tvRemote!!
@@ -115,6 +116,6 @@ private var _tvRemote: ImageVector? = null
 @Composable
 private fun Preview(): Unit {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = TvRemote, contentDescription = "")
+        Image(imageVector = MyIconPack.TvRemote, contentDescription = "")
     }
 }
