@@ -1,10 +1,9 @@
 package com.github.heroslender.lgtvcontroller.device
 
-import com.github.heroslender.lgtvcontroller.domain.model.App
-import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface Device {
     val tv: Tv
@@ -14,14 +13,8 @@ interface Device {
 
     val friendlyName: String
         get() = tv.name
-    val displayName: Flow<String?>
 
-    val status: Flow<DeviceStatus>
-
-    val apps: Flow<List<App>>
-    val inputs: Flow<List<Input>>
-
-    val runningApp: Flow<String>
+    val state: StateFlow<DeviceState>
 
     val errors: Flow<Snackbar>
 

@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,32 +29,19 @@ class ControllerViewModel @Inject constructor(
             }
 
             combine(
-                device.status,
-                device.displayName,
+                device.state,
                 settingsRepository.settingsFlow,
-            ) { deviceStatus, displayName, settings ->
+            ) { deviceState, settings ->
                 ControllerUiState(
                     device = device,
-                    deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName,
-                    deviceStatus = deviceStatus,
+                    deviceName = if (deviceState.displayName.isNullOrEmpty()) device.friendlyName else deviceState.displayName,
+                    deviceStatus = deviceState.status,
                     isFavorite = device.id == settings.favoriteId,
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, ControllerUiState())
 
     val errors: Flow<Snackbar> = deviceManager.connectedDevice.flatMapConcat { device ->
-        if (device == null) {
-            return@flatMapConcat emptyFlow()
-        }
-
-        device.errors
-    }
-
-    fun setFavorite(isFavorite: Boolean) {
-        viewModelScope.launch {
-            settingsRepository.updateFavoriteId(
-                if (isFavorite) deviceManager.connectedDevice.value?.id ?: "" else ""
-            )
-        }
+        device?.errors ?: emptyFlow()
     }
 }

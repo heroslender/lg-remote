@@ -9,6 +9,7 @@ import com.connectsdk.service.capability.Launcher
 import com.connectsdk.service.command.ServiceCommandError
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.device.Device
+import com.github.heroslender.lgtvcontroller.device.DeviceState
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.App
 import com.github.heroslender.lgtvcontroller.domain.model.Input
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import org.json.JSONArray
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -31,35 +33,17 @@ class LgDevice(
     override val tv: Tv
         get() = device.tv
 
-    private val _status: MutableStateFlow<DeviceStatus> =
-        MutableStateFlow(status)
-    override val status: StateFlow<DeviceStatus>
-        get() = _status
-
-    private val _apps: MutableStateFlow<List<App>> =
-        MutableStateFlow(tv.apps)
-    override val apps: StateFlow<List<App>>
-        get() = _apps
-
-    private val _inputs: MutableStateFlow<List<Input>> =
-        MutableStateFlow(tv.inputs)
-    override val inputs: StateFlow<List<Input>>
-        get() = _inputs
-
-    private val _runningApp: MutableStateFlow<String> =
-        MutableStateFlow("")
-    override val runningApp: StateFlow<String>
-        get() = _runningApp
-
-    override val id: String
-        get() = device.id
-
-    override val friendlyName: String
-        get() = tv.name
-
-    private val _displayName: MutableStateFlow<String?> = MutableStateFlow(tv.displayName)
-    override val displayName: Flow<String?>
-        get() = _displayName
+    private val _state: MutableStateFlow<DeviceState> = MutableStateFlow(
+        DeviceState(
+            displayName = tv.displayName,
+            status = status,
+            runningApp = "",
+            apps = tv.apps,
+            inputs = tv.inputs
+        )
+    )
+    override val state: StateFlow<DeviceState>
+        get() = _state
 
     private val _errors = MutableSharedFlow<Snackbar>()
     override val errors: Flow<Snackbar> = _errors
@@ -156,7 +140,9 @@ class LgDevice(
     }
 
     override fun updateStatus(status: DeviceStatus) {
-        _status.value = status
+        _state.update {
+            it.copy(status = status)
+        }
     }
 
     suspend fun getExternalInputList(): List<Input> = suspendCoroutine { continuation ->
@@ -213,7 +199,12 @@ class LgDevice(
                 }
 
                 override fun onError(error: ServiceCommandError) {
-                    _errors.tryEmit(Snackbar.error("Failed to load app list from TV", error.message))
+                    _errors.tryEmit(
+                        Snackbar.error(
+                            "Failed to load app list from TV",
+                            error.message
+                        )
+                    )
                     cont.resume(mutableListOf())
                 }
             })
@@ -247,7 +238,12 @@ class LgDevice(
                 }
 
                 override fun onError(error: ServiceCommandError) {
-                    _errors.tryEmit(Snackbar.error("Failed to load launch points from TV", error.message))
+                    _errors.tryEmit(
+                        Snackbar.error(
+                            "Failed to load launch points from TV",
+                            error.message
+                        )
+                    )
                     continuation.resume(emptyList())
                 }
             })
@@ -257,7 +253,7 @@ class LgDevice(
     fun subscribeRunningApp() {
         device.device.launcher.subscribeRunningApp(object : Launcher.AppInfoListener {
             override fun onSuccess(appInfo: AppInfo) {
-                _runningApp.tryEmit(appInfo.id)
+                _state.update { it.copy(runningApp = appInfo.id) }
             }
 
             override fun onError(error: ServiceCommandError) {
@@ -269,23 +265,23 @@ class LgDevice(
         try {
             val inputList = getExternalInputList()
             tv.inputs = inputList
-            _inputs.value = inputList
+            _state.update { it.copy(inputs = inputList) }
         } catch (e: Exception) {
             Log.e("LgDevice", "Failed to load inputs: ${e.message}")
             _errors.tryEmit(Snackbar.error("Failed to load inputs", e.message))
             tv.inputs = emptyList()
-            _inputs.value = emptyList()
+            _state.update { it.copy(inputs = emptyList()) }
         }
 
         try {
             val appList = getAppList().sortedByDescending { it.installedTime }
             tv.apps = appList
-            _apps.value = appList
+            _state.update { it.copy(apps = appList) }
         } catch (e: Exception) {
             Log.e("LgDevice", "Failed to load apps: ${e.message}")
             _errors.tryEmit(Snackbar.error("Failed to load apps", e.message))
             tv.apps = emptyList()
-            _apps.value = emptyList()
+            _state.update { it.copy(apps = emptyList()) }
         }
 
         manager.updateTv(tv)
@@ -299,6 +295,6 @@ class LgDevice(
     }
 
     fun updateDisplayName() {
-        _displayName.tryEmit(tv.displayName)
+        _state.update { it.copy(displayName = tv.displayName) }
     }
 }

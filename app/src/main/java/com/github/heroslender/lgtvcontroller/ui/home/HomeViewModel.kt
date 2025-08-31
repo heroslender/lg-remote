@@ -7,11 +7,14 @@ import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,52 +23,30 @@ class HomeViewModel @Inject constructor(
     private val deviceManager: DeviceManager,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState
-
-    private val _errors = MutableSharedFlow<Snackbar>()
-    val errors: Flow<Snackbar> = _errors
-
-    init {
-        deviceManager.connectedDevice.launchCollect { device ->
-            _uiState.update {
-                it.copy(device = device)
-            }
-
+    val uiState: StateFlow<HomeUiState> =
+        deviceManager.connectedDevice.flatMapLatest { device ->
             if (device == null) {
-                _uiState.tryEmit(HomeUiState())
-                return@launchCollect
+                return@flatMapLatest flowOf(HomeUiState())
             }
 
-            device.errors.launchCollect { snackbar ->
-                _errors.emit(snackbar)
+            combine(
+                device.state,
+                settingsRepository.settingsFlow,
+            ) { deviceState, settings ->
+                HomeUiState(
+                    device = device,
+                    deviceName = if (deviceState.displayName.isNullOrEmpty()) device.friendlyName else deviceState.displayName,
+                    deviceStatus = deviceState.status,
+                    runningApp = deviceState.runningApp,
+                    apps = deviceState.apps,
+                    inputs = deviceState.inputs,
+                    isFavorite = device.id == settings.favoriteId,
+                )
             }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
 
-            device.displayName.bindToState(_uiState) { state, displayName ->
-                state.copy(deviceName = if (displayName.isNullOrEmpty()) device.friendlyName else displayName)
-            }
-
-            device.status.bindToState(_uiState) { state, status ->
-                state.copy(deviceStatus = status)
-            }
-
-
-            device.apps.bindToState(_uiState) { state, apps ->
-                state.copy(apps = apps)
-            }
-
-            device.inputs.bindToState(_uiState) { state, inputs ->
-                state.copy(inputs = inputs)
-            }
-
-            device.runningApp.bindToState(_uiState) { state, runningApp ->
-                state.copy(runningApp = runningApp)
-            }
-
-            settingsRepository.settingsFlow.bindToState(_uiState) { state, settings ->
-                state.copy(isFavorite = device.id == settings.favoriteId)
-            }
-        }
+    val errors: Flow<Snackbar> = deviceManager.connectedDevice.flatMapConcat { device ->
+        device?.errors ?: emptyFlow()
     }
 
     fun setFavorite(isFavorite: Boolean) {
@@ -73,20 +54,6 @@ class HomeViewModel @Inject constructor(
             settingsRepository.updateFavoriteId(
                 if (isFavorite) deviceManager.connectedDevice.value?.id ?: "" else ""
             )
-        }
-    }
-
-    private fun <T, S> Flow<T>.bindToState(state: MutableStateFlow<S>, mapper: (S, T) -> S) {
-        launchCollect { value ->
-            state.update { state ->
-                mapper(state, value)
-            }
-        }
-    }
-
-    private fun <T> Flow<T>.launchCollect(collector: FlowCollector<T>) {
-        viewModelScope.launch {
-            collect(collector)
         }
     }
 }
