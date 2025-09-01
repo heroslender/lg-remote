@@ -33,10 +33,11 @@ class ControllerViewModel @Inject constructor(
                 settingsRepository.settingsFlow,
             ) { deviceState, settings ->
                 ControllerUiState(
-                    device = device,
                     deviceName = if (deviceState.displayName.isNullOrEmpty()) device.friendlyName else deviceState.displayName,
                     deviceStatus = deviceState.status,
                     isFavorite = device.id == settings.favoriteId,
+                    hasCapability = { device.hasCapability(it) },
+                    executeButton = { device.executeControllerButton(it) },
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, ControllerUiState())

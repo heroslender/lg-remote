@@ -34,13 +34,16 @@ class HomeViewModel @Inject constructor(
                 settingsRepository.settingsFlow,
             ) { deviceState, settings ->
                 HomeUiState(
-                    device = device,
+                    deviceID = device.id,
                     deviceName = if (deviceState.displayName.isNullOrEmpty()) device.friendlyName else deviceState.displayName,
                     deviceStatus = deviceState.status,
                     runningApp = deviceState.runningApp,
                     apps = deviceState.apps,
                     inputs = deviceState.inputs,
                     isFavorite = device.id == settings.favoriteId,
+                    hasCapability = device::hasCapability,
+                    executeButton = device::executeControllerButton,
+                    launchApp = device::launchApp,
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())

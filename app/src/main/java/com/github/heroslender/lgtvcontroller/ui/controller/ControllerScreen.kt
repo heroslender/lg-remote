@@ -39,18 +39,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.connectsdk.service.capability.ExternalInputControl
-import com.connectsdk.service.capability.KeyControl
-import com.connectsdk.service.capability.PowerControl
-import com.connectsdk.service.capability.TVControl
-import com.connectsdk.service.capability.VolumeControl
 import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.device.Device
+import com.github.heroslender.lgtvcontroller.device.DeviceControllerButton
+import com.github.heroslender.lgtvcontroller.device.DeviceState
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
-import com.github.heroslender.lgtvcontroller.domain.model.App
-import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import com.github.heroslender.lgtvcontroller.ui.snackbar.StackedSnackbarHost
@@ -89,11 +84,12 @@ fun ControllerScreenPreview(
 ) {
     val device = if (isConnected) PreviewDevice else null
     val controllerUiState = ControllerUiState(
-        device = device,
         deviceName = device?.friendlyName,
-        deviceStatus = device?.let { runBlocking { it.status.first() } }
+        deviceStatus = device?.let { runBlocking { it.state.first().status } }
             ?: DeviceStatus.DISCONNECTED,
-        isFavorite = isFavorite
+        isFavorite = isFavorite,
+        hasCapability = { true },
+        executeButton = {},
     )
 
     ControllerScreen(
@@ -151,22 +147,27 @@ fun ControllerScreen(
                 .padding(horizontal = 32.dp, vertical = 16.dp)
         ) {
             Header(
-                device = controllerUiState.device,
                 deviceName = controllerUiState.deviceName,
                 deviceStatus = controllerUiState.deviceStatus,
+                hasPowerCapability = controllerUiState.hasCapability(DeviceControllerButton.POWER),
+                powerOff = { controllerUiState.executeButton(DeviceControllerButton.POWER) },
                 navigateToDeviceList = navigateUp,
             )
 
-            Controls(controllerUiState.device)
+            Controls(
+                hasCapability = controllerUiState.hasCapability,
+                executeButton = controllerUiState.executeButton,
+            )
         }
     }
 }
 
 @Composable
 fun Header(
-    device: Device?,
     deviceName: String?,
     deviceStatus: DeviceStatus,
+    hasPowerCapability: Boolean,
+    powerOff: () -> Unit,
     navigateToDeviceList: () -> Unit,
 ) {
     ElevatedCard(
@@ -180,7 +181,7 @@ fun Header(
                 .padding(horizontal = 9.dp, vertical = 4.dp),
         ) {
             Row(horizontalArrangement = Arrangement.Absolute.Left) {
-                PowerButton(device)
+                PowerButton(hasPowerCapability, powerOff)
             }
 
             Column(
@@ -205,14 +206,17 @@ fun Header(
 }
 
 @Composable
-fun PowerButton(device: Device?) {
-    if (device.hasCapability(PowerControl.Any)) {
+fun PowerButton(
+    hasPowerCapability: Boolean,
+    powerOff: () -> Unit,
+) {
+    if (hasPowerCapability) {
         FilledIconButton(
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = colorResource(R.color.power)
             ),
             onClick = {
-                device?.powerOff()
+                powerOff()
             },
         ) {
             Icon(
@@ -224,7 +228,10 @@ fun PowerButton(device: Device?) {
 }
 
 @Composable
-fun ColumnScope.Controls(device: Device?) {
+fun ColumnScope.Controls(
+    hasCapability: (DeviceControllerButton) -> Boolean,
+    executeButton: (DeviceControllerButton) -> Unit,
+) {
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
@@ -233,13 +240,14 @@ fun ColumnScope.Controls(device: Device?) {
             modifier = Modifier
                 .padding(bottom = ControlsSpacing)
                 .height(IntrinsicSize.Min)
-                .fillMaxWidth()
+                .fillMaxWidth(),
         ) {
             VolumeControls(
-                device = device,
+                hasCapability = hasCapability,
+                executeButton = executeButton,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .weight(1F)
+                    .weight(1F),
             )
 
             Column(
@@ -251,31 +259,32 @@ fun ColumnScope.Controls(device: Device?) {
                 CIconButton(
                     iconId = R.drawable.baseline_input_24,
                     contentDescription = stringResource(string.source_button),
-                    enabled = device.hasCapability(ExternalInputControl.Any),
+                    enabled = hasCapability(DeviceControllerButton.SOURCE),
                     modifier = Modifier
                         .aspectRatio(1F, true)
                         .weight(1F),
                 ) {
-                    device?.source()
+                    executeButton(DeviceControllerButton.SOURCE)
                 }
 
                 CIconButton(
                     imageVector = Icons.AutoMirrored.Filled.VolumeOff,
                     contentDescription = stringResource(string.mute_button),
-                    enabled = device.hasCapability(VolumeControl.Mute_Set),
+                    enabled = hasCapability(DeviceControllerButton.MUTE),
                     modifier = Modifier
                         .weight(1F)
                         .aspectRatio(1F, true),
                 ) {
-                    device?.mute()
+                    executeButton(DeviceControllerButton.MUTE)
                 }
             }
 
             ChannelControls(
-                device = device,
+                hasCapability = hasCapability,
+                executeButton = executeButton,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .weight(1F)
+                    .weight(1F),
             )
         }
 
@@ -288,19 +297,19 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 iconId = R.drawable.baseline_home_24,
                 contentDescription = stringResource(string.home_button),
-                enabled = device.hasCapability(KeyControl.Home),
+                enabled = hasCapability(DeviceControllerButton.HOME),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
                     .padding(bottom = ControlsSpacing),
             ) {
-                device?.home()
+                executeButton(DeviceControllerButton.HOME)
             }
 
             CIconButton(
                 iconId = R.drawable.baseline_keyboard_arrow_up_24,
                 contentDescription = stringResource(string.up_button),
-                enabled = device.hasCapability(KeyControl.Up),
+                enabled = hasCapability(DeviceControllerButton.UP),
                 shape = ButtonShape.copy(
                     bottomEnd = CornerSize(0.dp),
                     bottomStart = CornerSize(0.dp)
@@ -309,19 +318,19 @@ fun ColumnScope.Controls(device: Device?) {
                     .aspectRatio(1F, true)
                     .weight(1F),
             ) {
-                device?.up()
+                executeButton(DeviceControllerButton.UP)
             }
 
             CIconButton(
                 iconId = R.drawable.baseline_settings_24,
                 contentDescription = stringResource(string.settings_button),
-                enabled = device.hasCapability(KeyControl.Any),
+                enabled = hasCapability(DeviceControllerButton.QMENU),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
                     .padding(bottom = ControlsSpacing),
             ) {
-                device?.qmenu()
+                executeButton(DeviceControllerButton.QMENU)
             }
         }
         Row(
@@ -332,24 +341,24 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 iconId = R.drawable.baseline_keyboard_arrow_left_24,
                 contentDescription = stringResource(string.left_button),
-                enabled = device.hasCapability(KeyControl.Left),
+                enabled = hasCapability(DeviceControllerButton.LEFT),
                 shape = ButtonShape.copy(topEnd = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F),
             ) {
-                device?.left()
+                executeButton(DeviceControllerButton.LEFT)
             }
 
             CTextButton(
                 text = stringResource(string.ok_button),
                 shape = CutCornerShape(0.dp),
-                enabled = device.hasCapability(KeyControl.OK),
+                enabled = hasCapability(DeviceControllerButton.OK),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F),
             ) {
-                device?.ok()
+                executeButton(DeviceControllerButton.OK)
             }
 
             CIconButton(
@@ -359,12 +368,12 @@ fun ColumnScope.Controls(device: Device?) {
                     topStart = CornerSize(0.dp),
                     bottomStart = CornerSize(0.dp)
                 ),
-                enabled = device.hasCapability(KeyControl.Right),
+                enabled = hasCapability(DeviceControllerButton.RIGHT),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F),
             ) {
-                device?.right()
+                executeButton(DeviceControllerButton.RIGHT)
             }
         }
         Row(
@@ -376,36 +385,36 @@ fun ColumnScope.Controls(device: Device?) {
             CIconButton(
                 iconId = R.drawable.baseline_arrow_back_24,
                 contentDescription = stringResource(string.back_button),
-                enabled = device.hasCapability(KeyControl.Back),
+                enabled = hasCapability(DeviceControllerButton.BACK),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
                     .padding(top = ControlsSpacing),
             ) {
-                device?.back()
+                executeButton(DeviceControllerButton.BACK)
             }
 
             CIconButton(
                 iconId = R.drawable.baseline_keyboard_arrow_down_24,
                 contentDescription = stringResource(string.down_button),
                 shape = ButtonShape.copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp)),
-                enabled = device.hasCapability(KeyControl.Down),
+                enabled = hasCapability(DeviceControllerButton.DOWN),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F),
             ) {
-                device?.down()
+                executeButton(DeviceControllerButton.DOWN)
             }
 
             CTextButton(
                 text = "Exit",
-                enabled = device.hasCapability(KeyControl.Any),
+                enabled = hasCapability(DeviceControllerButton.EXIT),
                 modifier = Modifier
                     .aspectRatio(1F, true)
                     .weight(1F)
                     .padding(top = ControlsSpacing),
             ) {
-                device?.exit()
+                executeButton(DeviceControllerButton.EXIT)
             }
         }
     }
@@ -413,10 +422,11 @@ fun ColumnScope.Controls(device: Device?) {
 
 @Composable
 fun RowScope.VolumeControls(
-    device: Device?,
+    hasCapability: (DeviceControllerButton) -> Boolean,
+    executeButton: (DeviceControllerButton) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isEnabled = device.hasCapability(VolumeControl.Volume_Up_Down)
+    val isEnabled = hasCapability(DeviceControllerButton.VOLUME_UP)
     VerticalControls(
         centerText = stringResource(string.volume_controls),
         modifier = modifier,
@@ -430,7 +440,7 @@ fun RowScope.VolumeControls(
                     .weight(1F)
                     .fillMaxWidth(),
             ) {
-                device?.volumeUp()
+                executeButton(DeviceControllerButton.VOLUME_UP)
             }
         },
         bottomButton = {
@@ -442,7 +452,7 @@ fun RowScope.VolumeControls(
                     .weight(1F)
                     .fillMaxWidth(),
             ) {
-                device?.volumeDown()
+                executeButton(DeviceControllerButton.VOLUME_DOWN)
             }
         }
     )
@@ -450,35 +460,37 @@ fun RowScope.VolumeControls(
 
 @Composable
 fun RowScope.ChannelControls(
-    device: Device?,
+    hasCapability: (DeviceControllerButton) -> Boolean,
+    executeButton: (DeviceControllerButton) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isEnabled = hasCapability(DeviceControllerButton.CHANNEL_UP)
     VerticalControls(
         centerText = stringResource(string.channel_controls),
         modifier = modifier,
-        enabled = device.hasCapability(TVControl.Channel_Up) || device.hasCapability(TVControl.Channel_Down),
+        enabled = isEnabled,
         topButton = {
             CIconButton(
                 iconId = R.drawable.baseline_keyboard_arrow_up_24,
                 contentDescription = stringResource(string.channel_up_button),
-                enabled = device.hasCapability(TVControl.Channel_Up),
+                enabled = isEnabled,
                 modifier = Modifier
                     .weight(1F)
                     .fillMaxWidth()
             ) {
-                device?.channelUp()
+                executeButton(DeviceControllerButton.CHANNEL_UP)
             }
         },
         bottomButton = {
             CIconButton(
                 iconId = R.drawable.baseline_keyboard_arrow_down_24,
                 contentDescription = stringResource(string.channel_down_button),
-                enabled = device.hasCapability(TVControl.Channel_Down),
+                enabled = isEnabled,
                 modifier = Modifier
                     .weight(1F)
                     .fillMaxWidth()
             ) {
-                device?.channelDown()
+                executeButton(DeviceControllerButton.CHANNEL_DOWN)
             }
         }
     )
@@ -489,12 +501,9 @@ fun Device?.hasCapability(capability: String) = this?.hasCapability(capability) 
 object PreviewDevice : Device {
     override val id: String = "gads-sdgfds-g-fdsgfdgdf-sdfsdf"
     override val friendlyName: String = "Living Room TV"
-    override val displayName: Flow<String?> = flowOf("Living Room TV")
     override val tv: Tv = Tv(id, friendlyName, "Living Room TV", emptyList(), emptyList())
-    override val status: Flow<DeviceStatus> = flowOf(DeviceStatus.CONNECTED)
-    override val apps: Flow<List<App>> = flowOf(emptyList())
-    override val inputs: Flow<List<Input>> = flowOf(emptyList())
-    override val runningApp: Flow<String> = flowOf("")
+    override val state: Flow<DeviceState> =
+        flowOf(DeviceState("Living Room TV", DeviceStatus.CONNECTED, "", emptyList(), emptyList()))
     override val errors: Flow<Snackbar> = flowOf()
 
     override fun hasCapability(capability: String): Boolean = true

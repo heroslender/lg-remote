@@ -70,14 +70,11 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
 import com.bumptech.glide.load.model.GlideUrl
-import com.connectsdk.service.capability.KeyControl
-import com.connectsdk.service.capability.PowerControl
-import com.connectsdk.service.capability.VolumeControl
 import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.TopAppBarAction
-import com.github.heroslender.lgtvcontroller.device.Device
+import com.github.heroslender.lgtvcontroller.device.DeviceControllerButton
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.App
 import com.github.heroslender.lgtvcontroller.domain.model.Input
@@ -85,7 +82,6 @@ import com.github.heroslender.lgtvcontroller.ui.controller.ButtonShape
 import com.github.heroslender.lgtvcontroller.ui.controller.CIconButton
 import com.github.heroslender.lgtvcontroller.ui.controller.CTextButton
 import com.github.heroslender.lgtvcontroller.ui.controller.PreviewDevice
-import com.github.heroslender.lgtvcontroller.ui.controller.hasCapability
 import com.github.heroslender.lgtvcontroller.ui.icons.MyIconPack
 import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.TvRemote
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
@@ -105,9 +101,9 @@ fun HomePreview(
 ) {
     val device = if (isConnected) PreviewDevice else null
     val uiState = HomeUiState(
-        device = device,
+        device?.id,
         deviceName = device?.friendlyName,
-        deviceStatus = device?.let { runBlocking { it.status.first() } }
+        deviceStatus = device?.let { runBlocking { it.state.first().status } }
             ?: DeviceStatus.DISCONNECTED,
         runningApp = "netflix",
         isFavorite = isFavorite,
@@ -120,6 +116,7 @@ fun HomePreview(
             Input(id = "hdmi2", name = "HDMI2", icon = "a", connected = true),
             Input(id = "scart", name = "SCART", icon = "a"),
         ),
+        hasCapability = { true },
     )
 
     HomeScreen(
@@ -197,9 +194,9 @@ fun HomeScreen(
                     TopAppBarAction(
                         imageVector = Filled.Settings,
                         contentDescription = stringResource(string.edit_button),
-                        enabled = uiState.device != null,
+                        enabled = uiState.deviceID != null,
                     ) {
-                        uiState.device?.id?.also { navigateToEditDevice(it) }
+                        uiState.deviceID?.also { navigateToEditDevice(it) }
                     }
                 },
             )
@@ -214,7 +211,9 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             ControllerShortcutsCard(
-                device = uiState.device,
+                isConnected = uiState.deviceID != null,
+                hasCapability = uiState.hasCapability,
+                executeButton = uiState.executeButton,
                 navigateToController = navigateToController,
             )
 
@@ -222,7 +221,7 @@ fun HomeScreen(
                 apps = uiState.apps,
                 runningApp = uiState.runningApp,
                 openApp = { app ->
-                    uiState.device?.launchApp(app.id)
+                    uiState.launchApp(app.id)
                 }
             )
 
@@ -230,7 +229,7 @@ fun HomeScreen(
                 inputs = uiState.inputs,
                 runningApp = uiState.runningApp,
                 switchInput = { input ->
-                    uiState.device?.launchApp(input.id)
+                    uiState.launchApp(input.id)
                 }
             )
         }
@@ -240,59 +239,65 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ControllerShortcutsCard(
-    device: Device?,
+    isConnected: Boolean,
+    hasCapability: (DeviceControllerButton) -> Boolean,
+    executeButton: (DeviceControllerButton) -> Unit,
     navigateToController: () -> Unit,
 ) {
     ContentCard(
         iconVector = MyIconPack.TvRemote,
         header = stringResource(string.controller_card_title),
-        openCard = if (device != null) navigateToController else null
+        openCard = if (isConnected) navigateToController else null
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CIconButton(
                     iconId = R.drawable.baseline_power_24,
                     contentDescription = stringResource(string.power_button),
-                    enabled = device.hasCapability(PowerControl.Any),
+                    enabled = hasCapability(DeviceControllerButton.POWER),
                     modifier = Modifier
                         .weight(1F)
                         .aspectRatio(1F, true),
                 ) {
-                    device?.powerOff()
+                    executeButton(DeviceControllerButton.POWER)
                 }
                 CIconButton(
                     imageVector = Icons.AutoMirrored.Filled.VolumeOff,
                     contentDescription = stringResource(string.mute_button),
-                    enabled = device.hasCapability(VolumeControl.Mute_Set),
+                    enabled = hasCapability(DeviceControllerButton.MUTE),
                     modifier = Modifier
                         .weight(1F)
                         .aspectRatio(1F, true),
                 ) {
-                    device?.mute()
+                    executeButton(DeviceControllerButton.MUTE)
                 }
                 CIconButton(
                     iconId = R.drawable.baseline_home_24,
                     contentDescription = stringResource(string.home_button),
-                    enabled = device.hasCapability(KeyControl.Home),
+                    enabled = hasCapability(DeviceControllerButton.HOME),
                     modifier = Modifier
                         .weight(1F)
                         .aspectRatio(1F, true),
                 ) {
-                    device?.home()
+                    executeButton(DeviceControllerButton.HOME)
                 }
             }
 
-            VolumeControls(device)
+            VolumeControls(
+                hasCapability = hasCapability,
+                executeButton = executeButton,
+            )
         }
     }
 }
 
 @Composable
 fun ColumnScope.VolumeControls(
-    device: Device?,
+    hasCapability: (DeviceControllerButton) -> Boolean,
+    executeButton: (DeviceControllerButton) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isEnabled = device.hasCapability(VolumeControl.Volume_Up_Down)
+    val isEnabled = hasCapability(DeviceControllerButton.VOLUME_UP)
     HorizontalControls(
         centerText = stringResource(string.volume_controls),
         modifier = modifier,
@@ -307,7 +312,7 @@ fun ColumnScope.VolumeControls(
                     .fillMaxWidth()
                     .aspectRatio(1.4F, false),
             ) {
-                device?.volumeDown()
+                executeButton(DeviceControllerButton.VOLUME_DOWN)
             }
         },
         bottomButton = {
@@ -320,7 +325,7 @@ fun ColumnScope.VolumeControls(
                     .fillMaxWidth()
                     .aspectRatio(1.4F, false),
             ) {
-                device?.volumeUp()
+                executeButton(DeviceControllerButton.VOLUME_UP)
             }
         }
     )
