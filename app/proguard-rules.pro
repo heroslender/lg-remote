@@ -25,3 +25,11 @@
 
 -dontwarn org.conscrypt.Conscrypt
 -dontwarn org.conscrypt.OpenSSLProvider
+-dontwarn sun.security.x509.X509Key
+
+-keep class com.connectsdk.** { *; }
+#-keep class com.connectsdk.discovery.provider.** { *; }
+
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite* {
+   <fields>;
+}
