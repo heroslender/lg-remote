@@ -18,8 +18,11 @@ import com.github.heroslender.lgtvcontroller.device.impl.LgNetworkDevice
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -39,6 +42,9 @@ class DeviceManager(
     val devices: StateFlow<List<NetworkDevice>>
         get() = _devices
 
+    private val _errors = MutableSharedFlow<Snackbar>()
+    val errors: Flow<Snackbar> = _errors
+
     private var hasConnected = false
 
     /**
@@ -55,35 +61,44 @@ class DeviceManager(
     private var connectedTvId: String? = null
 
     init {
-        Log.d("Event_Listener", "restartDiscoveryManager :::: restart discovery")
-        DiscoveryManager.init(ctx)
-        DiscoveryManager.getInstance().pairingLevel = DiscoveryManager.PairingLevel.ON
-        DiscoveryManager.getInstance().registerDeviceService(
-            WebOSTVService::class.java,
-            SSDPDiscoveryProvider::class.java
-        )
-        DiscoveryManager.getInstance().registerDeviceService(
-            DLNAService::class.java,
-            SSDPDiscoveryProvider::class.java
-        )
-        DiscoveryManager.getInstance().addListener(this)
-        DiscoveryManager.getInstance().start()
+        try {
+            Log.d("Device_Manager", "Starting Device Manager...")
+            DiscoveryManager.init(ctx)
+            DiscoveryManager.getInstance().pairingLevel = DiscoveryManager.PairingLevel.ON
+            DiscoveryManager.getInstance().registerDeviceService(
+                WebOSTVService::class.java,
+                SSDPDiscoveryProvider::class.java
+            )
+            DiscoveryManager.getInstance().registerDeviceService(
+                DLNAService::class.java,
+                SSDPDiscoveryProvider::class.java
+            )
+            DiscoveryManager.getInstance().addListener(this)
+            DiscoveryManager.getInstance().start()
 
-        scope.launch {
-            try {
-                while (!hasConnected) {
-                    for (discoveryProvider in DiscoveryManager.getInstance().discoveryProviders) {
-                        Log.d(
-                            "Device_Manager",
-                            "rescan :::: " + discoveryProvider::class.simpleName
-                        )
-                        discoveryProvider.rescan()
+            scope.launch {
+                try {
+                    while (!hasConnected) {
+                        for (discoveryProvider in DiscoveryManager.getInstance().discoveryProviders) {
+                            Log.d(
+                                "Device_Manager",
+                                "rescan :::: " + discoveryProvider::class.simpleName
+                            )
+                            discoveryProvider.rescan()
+                        }
+
+                        delay(2000)
                     }
-
-                    delay(2000)
+                } catch (e: Exception) {
+                    Log.e("Device_Manager", "rescan :::: " + e.message)
+                    _errors.emit(Snackbar.error("Failed to scan for devices", e.message))
                 }
-            } catch (e: Exception) {
-                Log.e("Device_Manager", "rescan :::: " + e.message)
+            }
+        } catch (e: Exception) {
+            Log.e("Device_Manager", "Failed to start device manager: ${e.message}")
+            e.printStackTrace()
+            scope.launch {
+                _errors.emit(Snackbar.error("Failed to start device manager", e.message))
             }
         }
     }
@@ -106,7 +121,10 @@ class DeviceManager(
             try {
                 (device as LgDevice).loadAppsAndInputs()
             } catch (e: Exception) {
-                Log.e("DeviceManager", "Failed to load apps and inputs for device ${device.id}: ${e.message}")
+                Log.e(
+                    "DeviceManager",
+                    "Failed to load apps and inputs for device ${device.id}: ${e.message}"
+                )
             }
         }
     }
@@ -166,24 +184,32 @@ class DeviceManager(
 
     fun deviceFound(device: ConnectableDevice) {
         scope.launch {
-            val tv = try {
-                tvRepository
-                    .getTvStream(device.id)
-                    .first()
-            } catch (_: IllegalStateException) {
-                Log.d("DeviceManager", "Device not found in database")
-                Tv(id = device.id, name = device.friendlyName)
+            try {
+                val tv = try {
+                    tvRepository
+                        .getTvStream(device.id)
+                        .first()
+                } catch (_: IllegalStateException) {
+                    Log.d("DeviceManager", "Device not found in database")
+                    Tv(id = device.id, name = device.friendlyName)
+                }
+
+                val networkDevice = LgNetworkDevice(
+                    device = device,
+                    tv = tv,
+                    manager = this@DeviceManager,
+                )
+
+                _devices.tryEmit(listOf(*devices.value.toTypedArray(), networkDevice))
+
+                autoConnect(networkDevice)
+            } catch (e: Exception) {
+                Log.e("Device_Manager", "Failed to handle device found: ${e.message}")
+                e.printStackTrace()
+                scope.launch {
+                    _errors.emit(Snackbar.error("Failed to handle device found", e.message))
+                }
             }
-
-            val networkDevice = LgNetworkDevice(
-                device = device,
-                tv = tv,
-                manager = this@DeviceManager,
-            )
-
-            _devices.tryEmit(listOf(*devices.value.toTypedArray(), networkDevice))
-
-            autoConnect(networkDevice)
         }
     }
 

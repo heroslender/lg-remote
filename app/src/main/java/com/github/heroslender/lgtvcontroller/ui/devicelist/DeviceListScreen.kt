@@ -31,9 +31,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,6 +55,8 @@ import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.ui.controller.CButton
+import com.github.heroslender.lgtvcontroller.ui.snackbar.StackedSnackbarHost
+import com.github.heroslender.lgtvcontroller.ui.snackbar.rememberStackedSnackbarHostState
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlin.math.min
 import kotlin.math.pow
@@ -128,14 +130,24 @@ fun PreviewDeviceListFound() {
 @Composable
 fun DeviceListScreen(
     deviceListViewModel: DeviceListViewModel = hiltViewModel(),
-    navigateToController: () -> Unit
+    navigateToController: () -> Unit,
 ) {
     val devices by deviceListViewModel.uiState.collectAsState()
     deviceListViewModel.onDeviceConnected {
         navigateToController()
     }
 
-    Scaffold { innerPadding ->
+    val errorFlow = deviceListViewModel.errors
+    val stackedSnackbarHostState = rememberStackedSnackbarHostState()
+    LaunchedEffect(errorFlow) {
+        errorFlow.collect { snackbar ->
+            stackedSnackbarHostState.showSnackbar(snackbar)
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { StackedSnackbarHost(hostState = stackedSnackbarHostState) },
+    ) { innerPadding ->
         SharedTransitionLayout(modifier = Modifier.padding(innerPadding)) {
             AnimatedContent(
                 devices.devices.isNotEmpty(),
@@ -213,19 +225,10 @@ fun HasDevices(
             .fillMaxSize()
             .padding(horizontal = 32.dp, vertical = 16.dp)
     ) {
-        SmallFloatingActionButton(
-            onClick = { navigateToController() },
-            shape = CircleShape,
-            modifier = Modifier.align(Alignment.End)
-        ) {
-            Icon(
-                painterResource(R.drawable.baseline_close_24),
-                contentDescription = stringResource(string.back_button),
-            )
-        }
-
         Row(
-            Modifier.padding(top = 8.dp).height(IntrinsicSize.Min),
+            Modifier
+                .padding(top = 16.dp)
+                .height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically
         ) {
             with(sharedTransitionScope) {
@@ -284,7 +287,7 @@ fun offlineTVColor() = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
 @Composable
 fun DeviceItem(
     deviceData: DeviceItemData,
-    navigateToController: () -> Unit
+    navigateToController: () -> Unit,
 ) {
     val status by deviceData.status
 
@@ -336,7 +339,7 @@ data class DeviceItemData(
 
 @Composable
 fun Sonar(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val color = MaterialTheme.colorScheme.tertiary
     val colorStart = color.copy(alpha = .9F)

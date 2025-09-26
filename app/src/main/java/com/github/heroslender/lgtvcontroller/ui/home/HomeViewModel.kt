@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -49,7 +49,11 @@ class HomeViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
 
     val errors: Flow<Snackbar> = deviceManager.connectedDevice.flatMapConcat { device ->
-        device?.errors ?: emptyFlow()
+        if (device == null) {
+            deviceManager.errors
+        } else {
+            merge(device.errors, deviceManager.errors)
+        }
     }
 
     fun setFavorite(isFavorite: Boolean) {
