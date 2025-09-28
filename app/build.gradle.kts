@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.github.heroslender.lgtvcontroller"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.github.heroslender.lgtvcontroller"
