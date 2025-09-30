@@ -1,7 +1,6 @@
 [versions]
 agp = "8.13.0"
 connectSdkAndroidLite = "2.1.6"
-datastore = "1.1.7"
 error_prone_annotations = "2.42.0"
 glide = "5.0.5"
 glideCompose = "1.0.0-beta08"
@@ -20,7 +19,6 @@ lifecycleViewmodelCompose = "2.9.4"
 navigationCompose = "2.9.5"
 room = "2.8.1"
 ksp = "2.0.21-1.0.27"
-protobuf-javalite = "3.23.3"
 protobuf-plugin = "0.9.5"
 
 [libraries]
@@ -38,7 +36,6 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material-icons = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0" }
-androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
@@ -55,7 +52,6 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 ksp-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 connect-sdk-android-lite = { module = "com.github.ConnectSDK:Connect-SDK-Android-Lite", version.ref = "connectSdkAndroidLite" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf-javalite" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

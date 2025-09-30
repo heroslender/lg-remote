@@ -60,34 +60,26 @@ import kotlinx.coroutines.runBlocking
 @Preview()
 @Composable
 fun ControlPreview() {
-    ControllerScreenPreview(
-        isConnected = true,
-        isFavorite = false,
-    )
+    ControllerScreenPreview(isConnected = true)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun ControlPreviewDisconnected() {
-    ControllerScreenPreview(
-        isConnected = false,
-        isFavorite = false,
-    )
+    ControllerScreenPreview(isConnected = false)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ControllerScreenPreview(
     isConnected: Boolean,
-    isFavorite: Boolean,
 ) {
     val device = if (isConnected) PreviewDevice else null
     val controllerUiState = ControllerUiState(
         deviceName = device?.friendlyName,
         deviceStatus = device?.let { runBlocking { it.state.first().status } }
             ?: DeviceStatus.DISCONNECTED,
-        isFavorite = isFavorite,
         hasCapability = { true },
         executeButton = {},
     )
@@ -496,12 +488,10 @@ fun RowScope.ChannelControls(
     )
 }
 
-fun Device?.hasCapability(capability: String) = this?.hasCapability(capability) == true
-
 object PreviewDevice : Device {
     override val id: String = "gads-sdgfds-g-fdsgfdgdf-sdfsdf"
     override val friendlyName: String = "Living Room TV"
-    override val tv: Tv = Tv(id, friendlyName, "Living Room TV", emptyList(), emptyList())
+    override val tv: Tv = Tv(id, friendlyName, "Living Room TV", false, emptyList(), emptyList())
     override val state: Flow<DeviceState> =
         flowOf(DeviceState("Living Room TV", DeviceStatus.CONNECTED, "", emptyList(), emptyList()))
     override val errors: Flow<Snackbar> = flowOf()

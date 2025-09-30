@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import com.github.heroslender.lgtvcontroller.storage.entity.TvEntity
 
 @TypeConverters(value = [RoomTypeConverters::class])
-@Database(entities = [TvEntity::class], version = 3, exportSchema = false)
+@Database(entities = [TvEntity::class], version = 4, exportSchema = false)
 abstract class TvDatabase: RoomDatabase() {
 
     companion object {

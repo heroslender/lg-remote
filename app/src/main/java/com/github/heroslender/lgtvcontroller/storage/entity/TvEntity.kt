@@ -9,6 +9,7 @@ data class TvEntity(
     val id: String,
     val name: String,
     var displayName: String?,
+    var autoConnect: Boolean,
     var appList: AppList,
     var inputList: InputList,
 )

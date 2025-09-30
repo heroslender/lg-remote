@@ -27,8 +27,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.ElectricalServices
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardColors
@@ -96,7 +94,6 @@ import kotlinx.coroutines.runBlocking
 @Composable
 fun HomePreview(
     isConnected: Boolean = true,
-    isFavorite: Boolean = false,
 ) {
     val device = if (isConnected) PreviewDevice else null
     val uiState = HomeUiState(
@@ -105,7 +102,6 @@ fun HomePreview(
         deviceStatus = device?.let { runBlocking { it.state.first().status } }
             ?: DeviceStatus.DISCONNECTED,
         runningApp = "netflix",
-        isFavorite = isFavorite,
         apps = listOf(
             App(id = "youtube", name = "YouTube Yoyu YOuY asd", icon = "a"),
             App(id = "netflix", name = "Netflix", icon = "a"),
@@ -121,7 +117,6 @@ fun HomePreview(
     HomeScreen(
         uiState = uiState,
         errorFlow = flow {},
-        setFavorite = {},
         navigateToDeviceList = {},
         navigateToController = {},
         navigateToEditDevice = {},
@@ -141,7 +136,6 @@ fun HomeScreen(
     HomeScreen(
         uiState = uiState,
         errorFlow = homeViewModel.errors,
-        setFavorite = homeViewModel::setFavorite,
         navigateToDeviceList = navigateToDeviceList,
         navigateToController = navigateToController,
         navigateToEditDevice = navigateToEditDevice,
@@ -153,7 +147,6 @@ fun HomeScreen(
 fun HomeScreen(
     uiState: HomeUiState,
     errorFlow: Flow<Snackbar>,
-    setFavorite: (Boolean) -> Unit,
     navigateToDeviceList: () -> Unit,
     navigateToController: () -> Unit,
     navigateToEditDevice: (String) -> Unit,
@@ -182,13 +175,6 @@ fun HomeScreen(
                 },
                 navigateUp = navigateToDeviceList,
                 actions = {
-                    TopAppBarAction(
-                        imageVector = if (uiState.isFavorite) Filled.Star else Filled.StarBorder,
-                        contentDescription = stringResource(string.favorite_button),
-                    ) {
-                        setFavorite(!uiState.isFavorite)
-                    }
-
                     TopAppBarAction(
                         imageVector = Filled.Settings,
                         contentDescription = stringResource(string.edit_button),

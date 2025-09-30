@@ -1,5 +1,6 @@
 package com.github.heroslender.lgtvcontroller.ui.editor
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +12,7 @@ import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
 import com.github.heroslender.lgtvcontroller.ui.navigation.NavDest
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,19 +29,29 @@ class TvEditViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val id: String = checkNotNull(savedStateHandle[NavDest.EditDevice.tvIdArg])
-
-            tvRepository.getTvStream(id).collect {
-                updateUiState(TvDetails(it.id, it.name, it.displayName ?: ""))
-            }
+            val tv = tvRepository.getTvStream(id).first()
+            val details = TvDetails(
+                tvId = tv.id,
+                tvName = tv.name,
+                tvDisplayName = tv.displayName ?: tv.name,
+                autoConnect = tv.autoConnect
+            )
+            tvUiState = TvUiState(details, validateInput(details))
         }
     }
 
     fun updateUiState(uiState: TvDetails) {
+        val oldState = tvUiState
         tvUiState = TvUiState(uiState, validateInput(uiState))
+
+        if (tvUiState.isValid && oldState != tvUiState) {
+            Log.d("TvEditViewModel", "Updating TV details: $tvUiState")
+            save()
+        }
     }
 
     fun validateInput(uiState: TvDetails = tvUiState.tvDetails): Boolean {
-        return uiState.tvDisplayName.isNotEmpty() && uiState.tvId != "Loading..."
+        return uiState.tvId != "Loading..."
     }
 
     fun save() {
@@ -63,6 +75,12 @@ data class TvDetails(
     val tvId: String = "",
     val tvName: String = "",
     var tvDisplayName: String = "",
+    var autoConnect: Boolean = false,
 )
 
-fun TvDetails.toTv(): Tv = Tv(tvId, tvName, tvDisplayName)
+fun TvDetails.toTv(): Tv = Tv(
+    id = tvId,
+    name = tvName,
+    displayName = tvDisplayName,
+    autoConnect = autoConnect
+)

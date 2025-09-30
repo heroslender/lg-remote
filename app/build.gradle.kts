@@ -16,8 +16,8 @@ android {
         minSdk = 30
         targetSdk = 34
 
-        versionCode = 8
-        versionName = "0.3.3"
+        versionCode = 9
+        versionName = "0.3.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -58,9 +58,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons)
     implementation(libs.gson)
-
-    implementation(libs.androidx.datastore)
-    implementation(libs.protobuf.javalite)
 
     implementation(libs.glide)
     implementation(libs.glide.compose)

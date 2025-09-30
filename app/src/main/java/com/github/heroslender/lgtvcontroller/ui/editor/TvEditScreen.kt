@@ -8,13 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -23,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R.string
+import com.github.heroslender.lgtvcontroller.ui.preferences.SwitchPrefence
+import com.github.heroslender.lgtvcontroller.ui.preferences.TextPrefence
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +43,6 @@ fun ControlPreview() {
                     false
                 ),
                 onValueChange = {},
-                onSave = {},
                 modifier = Modifier
                     .padding(
                         start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
@@ -76,10 +73,6 @@ fun TvEditScreen(
         TvEditBody(
             uiState = tvEditViewModel.tvUiState,
             onValueChange = tvEditViewModel::updateUiState,
-            onSave = {
-                tvEditViewModel.save()
-                navigateBack()
-            },
             modifier = Modifier
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
@@ -92,58 +85,36 @@ fun TvEditScreen(
 fun TvEditBody(
     uiState: TvUiState,
     onValueChange: (TvDetails) -> Unit,
-    onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tvDetails = uiState.tvDetails
     Column(modifier = modifier.padding(15.dp, 10.dp)) {
-        TvEditForm(
-            tvDetails = uiState.tvDetails,
-            onValueChange = onValueChange
-        )
-
-        Button(
-            onClick = onSave,
-            enabled = uiState.isValid,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp)
-        ) {
-            Text(stringResource(string.save_action))
-        }
-    }
-}
-
-@Composable
-fun TvEditForm(
-    tvDetails: TvDetails,
-    onValueChange: (TvDetails) -> Unit,
-) {
-    Column {
-        OutlinedTextField(
+        TextPrefence(
+            title = "ID",
             value = tvDetails.tvId,
-            onValueChange = {},
-            label = { Text(stringResource(string.tv_id)) },
-            modifier = Modifier.fillMaxWidth(),
-            readOnly = true,
-            singleLine = true,
         )
 
-        OutlinedTextField(
+        TextPrefence(
+            title = "Name",
             value = tvDetails.tvName,
-            onValueChange = {},
-            label = { Text(stringResource(string.tv_name)) },
-            modifier = Modifier.fillMaxWidth(),
-            readOnly = true,
-            singleLine = true,
         )
 
-        OutlinedTextField(
+        TextPrefence(
+            title = "Display name",
             value = tvDetails.tvDisplayName,
-            onValueChange = { onValueChange(tvDetails.copy(tvDisplayName = it)) },
-            label = { Text(stringResource(string.tv_display_name)) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = true,
-            singleLine = true,
+            onValueChange = { newValue ->
+                onValueChange(tvDetails.copy(tvDisplayName = newValue.trim()))
+            }
+        )
+
+        SwitchPrefence(
+            title = "Auto Connect",
+            subtitle = "Automatically connect to this device when the app starts",
+            value = tvDetails.autoConnect,
+            onValueChange = { newValue ->
+                println("Switch changed to $newValue from ${tvDetails.autoConnect}")
+                onValueChange(tvDetails.copy(autoConnect = newValue))
+            }
         )
     }
 }

@@ -16,7 +16,6 @@ import com.github.heroslender.lgtvcontroller.device.NetworkDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgDevice
 import com.github.heroslender.lgtvcontroller.device.impl.LgNetworkDevice
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
-import com.github.heroslender.lgtvcontroller.settings.SettingsRepository
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +30,6 @@ import kotlinx.coroutines.launch
 class DeviceManager(
     ctx: Context,
     private val scope: CoroutineScope,
-    private val prefs: SettingsRepository,
     private val tvRepository: TvRepository,
 ) : DiscoveryManagerListener {
     private var _connectedDevice: MutableStateFlow<LgDevice?> = MutableStateFlow(null)
@@ -246,8 +244,7 @@ class DeviceManager(
         }
 
         scope.launch {
-            val favorite = prefs.settingsFlow.first().favoriteId
-            if (!hasConnected && favorite == device.id && device.isCompatible()) {
+            if (!hasConnected && device.tv.autoConnect && device.isCompatible()) {
                 Log.d("Device_Manager", "Connecting to device favorite")
                 connect(device)
             }

@@ -9,7 +9,6 @@ data class HomeUiState(
     val deviceID: String? = null,
     val deviceName: String? = null,
     val deviceStatus: DeviceStatus = DeviceStatus.DISCONNECTED,
-    val isFavorite: Boolean = false,
     val apps: List<App> = emptyList(),
     val inputs: List<Input> = emptyList(),
     val runningApp: String = "",
