@@ -11,6 +11,7 @@ import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
 import com.github.heroslender.lgtvcontroller.ui.navigation.NavDest
+import com.github.heroslender.lgtvcontroller.ui.preferences.InputValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ class TvEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    var tvUiState by mutableStateOf(TvUiState(TvDetails("Loading...", "Loading...")))
+    var tvUiState by mutableStateOf(TvUiState(TvDetails("Loading...", "Loading..."), this::validateDisplayName))
         private set
 
     init {
@@ -36,13 +37,13 @@ class TvEditViewModel @Inject constructor(
                 tvDisplayName = tv.displayName ?: tv.name,
                 autoConnect = tv.autoConnect
             )
-            tvUiState = TvUiState(details, validateInput(details))
+            tvUiState = tvUiState.copy(tvDetails = details, isValid = validateInput(details))
         }
     }
 
     fun updateUiState(uiState: TvDetails) {
         val oldState = tvUiState
-        tvUiState = TvUiState(uiState, validateInput(uiState))
+        tvUiState = tvUiState.copy(tvDetails = uiState, isValid =  validateInput(uiState))
 
         if (tvUiState.isValid && oldState != tvUiState) {
             Log.d("TvEditViewModel", "Updating TV details: $tvUiState")
@@ -52,6 +53,14 @@ class TvEditViewModel @Inject constructor(
 
     fun validateInput(uiState: TvDetails = tvUiState.tvDetails): Boolean {
         return uiState.tvId != "Loading..."
+    }
+
+    fun validateDisplayName(displayName: String): String? {
+        return if (displayName.isBlank()) {
+            "Display name cannot be blank"
+        } else {
+            null
+        }
     }
 
     fun save() {
@@ -67,15 +76,16 @@ class TvEditViewModel @Inject constructor(
 }
 
 data class TvUiState(
-    var tvDetails: TvDetails = TvDetails(),
-    var isValid: Boolean = false,
+    val tvDetails: TvDetails = TvDetails(),
+    val displayNameValidator: InputValidator,
+    val isValid: Boolean = false,
 )
 
 data class TvDetails(
     val tvId: String = "",
     val tvName: String = "",
-    var tvDisplayName: String = "",
-    var autoConnect: Boolean = false,
+    val tvDisplayName: String = "",
+    val autoConnect: Boolean = false,
 )
 
 fun TvDetails.toTv(): Tv = Tv(

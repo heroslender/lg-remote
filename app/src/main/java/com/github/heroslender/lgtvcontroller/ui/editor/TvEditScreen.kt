@@ -39,7 +39,13 @@ fun ControlPreview() {
         ) { innerPadding ->
             TvEditBody(
                 uiState = TvUiState(
-                    TvDetails("gads-sdgfds-g-fdsgfdgdf-sdfsdf", "Living Room TV"),
+                    TvDetails(
+                        "gads-sdgfds-g-fdsgfdgdf-sdfsdf",
+                        "LG WebOs Someting",
+                        "Living Room TV",
+                        true
+                    ),
+                    { null },
                     false
                 ),
                 onValueChange = {},
@@ -102,6 +108,7 @@ fun TvEditBody(
         TextPrefence(
             title = "Display name",
             value = tvDetails.tvDisplayName,
+            inputValidation = uiState.displayNameValidator,
             onValueChange = { newValue ->
                 onValueChange(tvDetails.copy(tvDisplayName = newValue.trim()))
             }
