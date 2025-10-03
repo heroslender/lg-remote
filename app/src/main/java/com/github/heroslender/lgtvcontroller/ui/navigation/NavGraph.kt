@@ -27,7 +27,7 @@ fun ControllerNavHost(
                 navigateToController = {
                     navController.navigate(NavDest.Home.route) {
                         popUpTo(NavDest.DeviceList.route) {
-                            inclusive = true
+                            inclusive = false
                         }
 
                         launchSingleTop = true
@@ -39,7 +39,13 @@ fun ControllerNavHost(
         composable(NavDest.Home.route) {
             HomeScreen(
                 navigateToDeviceList = {
-                    navController.navigate(NavDest.DeviceList.route)
+                    navController.navigate(NavDest.DeviceList.route) {
+                        popUpTo(NavDest.Home.route) {
+                            inclusive = true
+                        }
+
+                        launchSingleTop = true
+                    }
                 },
                 navigateToController = {
                     navController.navigate(NavDest.Controller.route)
