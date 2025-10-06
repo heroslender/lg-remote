@@ -168,7 +168,7 @@ fun TextInputDialog(
                         )
 
                         Text(
-                            text = errorMsg?: "",
+                            text = errorMsg ?: "",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(start = 4.dp),
@@ -224,6 +224,7 @@ fun DialogTextField(
     isError: Boolean = false,
     singleLine: Boolean = false,
     textStyle: TextStyle = LocalTextStyle.current,
+    trailingIcon: @Composable (() -> Unit)? = null,
     colors: TextFieldColors = TextFieldDefaults.colors(),
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -250,6 +251,7 @@ fun DialogTextField(
             singleLine = singleLine,
             enabled = enabled,
             isError = isError,
+            trailingIcon = trailingIcon,
             interactionSource = interactionSource,
             contentPadding = PaddingValues(0.dp), // this is how you can remove the padding
             colors = colors,

@@ -9,4 +9,5 @@ data class DeviceState(
     val runningApp: String,
     val apps: List<App>,
     val inputs: List<Input>,
+    val isKeyboardOpen: Boolean,
 )

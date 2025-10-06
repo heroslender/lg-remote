@@ -40,4 +40,7 @@
     <string name="controller_card_title">Remote</string>
     <string name="apps_card_title">Apps</string>
     <string name="inputs_card_title">Inputs</string>
+    <string name="text_input_dialog_title">Set text input</string>
+    <string name="text_input_dialog_success_title">Set text input</string>
+    <string name="text_input_dialog_success_description">Text input was set to: %1$s</string>
 </resources>

@@ -113,6 +113,11 @@ interface Device {
     fun launchNetflix()
 
     fun launchApp(appId: String)
+
+    fun sendText(text: String)
+    fun sendEnter()
+    fun sendDelete()
+
     fun disconnect()
     fun updateStatus(status: DeviceStatus)
 }

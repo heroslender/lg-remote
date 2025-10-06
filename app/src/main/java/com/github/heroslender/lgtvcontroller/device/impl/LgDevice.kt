@@ -1,11 +1,14 @@
 package com.github.heroslender.lgtvcontroller.device.impl
 
 import android.util.Log
+import androidx.room.util.copy
 import com.connectsdk.core.AppInfo
 import com.connectsdk.core.ExternalInputInfo
+import com.connectsdk.core.TextInputStatusInfo
 import com.connectsdk.service.WebOSTVService
 import com.connectsdk.service.capability.ExternalInputControl
 import com.connectsdk.service.capability.Launcher
+import com.connectsdk.service.capability.TextInputControl
 import com.connectsdk.service.command.ServiceCommandError
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.device.Device
@@ -43,7 +46,8 @@ class LgDevice(
             status = status,
             runningApp = "",
             apps = tv.apps,
-            inputs = tv.inputs
+            inputs = tv.inputs,
+            isKeyboardOpen = false,
         )
     )
     override val state: StateFlow<DeviceState>
@@ -270,6 +274,45 @@ class LgDevice(
         })
     }
 
+    override fun sendText(text: String) {
+     device.device.textInputControl.sendText(text)
+    }
+
+    override fun sendEnter() {
+        device.device.textInputControl.sendEnter()
+    }
+
+    override fun sendDelete() {
+        device.device.textInputControl.sendDelete()
+    }
+
+    fun subscribeTextInputListener() {
+        val textInputControl = device.device.getCapability(TextInputControl::class.java)
+        textInputControl.subscribeTextInputStatus(object : TextInputControl.TextInputStatusListener {
+            override fun onSuccess(statusInfo: TextInputStatusInfo) {
+                if (statusInfo.contentType != null) {
+                    _state.update { it.copy(isKeyboardOpen = true) }
+                } else {
+                    _state.update { it.copy(isKeyboardOpen = false) }
+                }
+
+                println("TextInputStatusListener: ${statusInfo.rawData.toString(2)}")
+            }
+
+            override fun onError(error: ServiceCommandError) {
+                println("TextInputStatusListener error: $error")
+            }
+        })
+    }
+
+    val TextInputStatusInfo.contentType: String?
+        get() {
+            return this::class.java.getDeclaredField("contentType").let { field ->
+                field.isAccessible = true
+                return@let field[this] as String?
+            }
+        }
+
     suspend fun loadAppsAndInputs() {
         try {
             val inputList = getExternalInputList()
@@ -300,6 +343,13 @@ class LgDevice(
         } catch (e: Exception) {
             Log.e("LgDevice", "Failed to subscribe to running app: ${e.message}")
             _errors.emit(Snackbar.error("Failed to subscribe to running app", e.message))
+        }
+
+        try {
+            subscribeTextInputListener()
+        } catch (e: Exception) {
+            Log.e("LgDevice", "Failed to subscribe to text input: ${e.message}")
+            _errors.emit(Snackbar.error("Failed to subscribe to text input", e.message))
         }
     }
 
