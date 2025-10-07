@@ -109,11 +109,11 @@ fun HomePreview(
             Input(id = "scart", name = "SCART", icon = "a"),
         ),
         hasCapability = { true },
-        isKeyboardOpen = true,
     )
 
     HomeScreen(
         uiState = uiState,
+        textInputState = TvTextInputState(isKeyboardOpen = true),
         errorFlow = flow {},
         navigateToDeviceList = {},
         navigateToController = {},
@@ -130,9 +130,11 @@ fun HomeScreen(
     navigateToEditDevice: (String) -> Unit,
 ) {
     val uiState by homeViewModel.uiState.collectAsState()
+    val textInputState by homeViewModel.tvTextInputState.collectAsState()
 
     HomeScreen(
         uiState = uiState,
+        textInputState = textInputState,
         errorFlow = homeViewModel.errors,
         navigateToDeviceList = navigateToDeviceList,
         navigateToController = navigateToController,
@@ -144,6 +146,7 @@ fun HomeScreen(
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
+    textInputState: TvTextInputState,
     errorFlow: Flow<Snackbar>,
     navigateToDeviceList: () -> Unit,
     navigateToController: () -> Unit,
@@ -151,12 +154,7 @@ fun HomeScreen(
 ) {
     ConnectedDeviceScaffold(
         errorFlow = errorFlow,
-        textInputState = TvTextInputState(
-            sendBackspace = uiState.sendBackspace,
-            sendEnter = uiState.sendEnter,
-            sendText = uiState.sendText,
-            isKeyboardOpen = uiState.isKeyboardOpen,
-        ),
+        textInputState = textInputState,
         topBar = {
             ControllerTopAppBar(
                 title = uiState.deviceName ?: "",

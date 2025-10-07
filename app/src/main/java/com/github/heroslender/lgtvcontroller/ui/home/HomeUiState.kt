@@ -14,9 +14,5 @@ data class HomeUiState(
     val runningApp: String = "",
     val hasCapability: (DeviceControllerButton) -> Boolean = { false },
     val executeButton: (DeviceControllerButton) -> Unit = {},
-    val sendBackspace: () -> Unit = {},
-    val isKeyboardOpen: Boolean = false,
-    val sendEnter: () -> Unit = {},
-    val sendText: (String) -> Unit = {},
     val launchApp: (String) -> Unit = {},
 )

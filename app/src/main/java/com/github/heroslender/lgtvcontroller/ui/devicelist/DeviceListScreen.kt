@@ -33,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,9 +53,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
+import com.github.heroslender.lgtvcontroller.ui.ConnectedDeviceScaffold
 import com.github.heroslender.lgtvcontroller.ui.controller.CButton
-import com.github.heroslender.lgtvcontroller.ui.snackbar.StackedSnackbarHost
-import com.github.heroslender.lgtvcontroller.ui.snackbar.rememberStackedSnackbarHostState
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 import kotlin.math.min
 import kotlin.math.pow
@@ -133,22 +131,17 @@ fun DeviceListScreen(
     navigateToController: () -> Unit,
 ) {
     val devices by deviceListViewModel.uiState.collectAsState()
+    val textInputState by deviceListViewModel.tvTextInputState.collectAsState()
+
     deviceListViewModel.onDeviceConnected {
         navigateToController()
     }
 
-    val errorFlow = deviceListViewModel.errors
-    val stackedSnackbarHostState = rememberStackedSnackbarHostState()
-    LaunchedEffect(errorFlow) {
-        errorFlow.collect { snackbar ->
-            stackedSnackbarHostState.showSnackbar(snackbar)
-        }
-    }
-
-    Scaffold(
-        snackbarHost = { StackedSnackbarHost(hostState = stackedSnackbarHostState) },
-    ) { innerPadding ->
-        SharedTransitionLayout(modifier = Modifier.padding(innerPadding)) {
+    ConnectedDeviceScaffold(
+        errorFlow = deviceListViewModel.errors,
+        textInputState = textInputState,
+    ) {
+        SharedTransitionLayout() {
             AnimatedContent(
                 devices.devices.isNotEmpty(),
                 label = "found devices transition"
