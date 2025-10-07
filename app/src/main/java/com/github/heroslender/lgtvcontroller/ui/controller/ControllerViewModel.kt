@@ -3,6 +3,7 @@ package com.github.heroslender.lgtvcontroller.ui.controller
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.heroslender.lgtvcontroller.DeviceManager
+import com.github.heroslender.lgtvcontroller.ui.TvTextInputState
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,22 @@ import javax.inject.Inject
 class ControllerViewModel @Inject constructor(
     private val deviceManager: DeviceManager,
 ) : ViewModel() {
+    val tvTextInputState: StateFlow<TvTextInputState> =
+        deviceManager.connectedDevice.flatMapLatest { device ->
+            if (device == null) {
+                return@flatMapLatest flowOf(TvTextInputState())
+            }
+
+            device.state.map { deviceState ->
+                TvTextInputState(
+                    isKeyboardOpen = deviceState.isKeyboardOpen,
+                    sendBackspace = device::sendDelete,
+                    sendEnter = device::sendEnter,
+                    sendText = device::sendText,
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, TvTextInputState())
+
     val uiState: StateFlow<ControllerUiState> =
         deviceManager.connectedDevice.flatMapLatest { device ->
             if (device == null) {

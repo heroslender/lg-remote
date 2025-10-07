@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,10 +23,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,7 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
@@ -47,9 +44,9 @@ import com.github.heroslender.lgtvcontroller.device.DeviceControllerButton
 import com.github.heroslender.lgtvcontroller.device.DeviceState
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
+import com.github.heroslender.lgtvcontroller.ui.ConnectedDeviceScaffold
+import com.github.heroslender.lgtvcontroller.ui.TvTextInputState
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
-import com.github.heroslender.lgtvcontroller.ui.snackbar.StackedSnackbarHost
-import com.github.heroslender.lgtvcontroller.ui.snackbar.rememberStackedSnackbarHostState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -86,6 +83,7 @@ fun ControllerScreenPreview(
 
     ControllerScreen(
         controllerUiState = controllerUiState,
+        tvTextInputState = TvTextInputState(),
         errorFlow = emptyFlow(),
         navigateUp = {}
     )
@@ -98,9 +96,11 @@ fun ControllerScreen(
     navigateUp: () -> Unit,
 ) {
     val controllerUiState by controllerViewModel.uiState.collectAsState()
+    val tvTextInputState by controllerViewModel.tvTextInputState.collectAsState()
 
     ControllerScreen(
         controllerUiState,
+        tvTextInputState,
         controllerViewModel.errors,
         navigateUp,
     )
@@ -110,33 +110,23 @@ fun ControllerScreen(
 @Composable
 fun ControllerScreen(
     controllerUiState: ControllerUiState,
+    tvTextInputState: TvTextInputState,
     errorFlow: Flow<Snackbar>,
     navigateUp: () -> Unit,
 ) {
-    val stackedSnackbarHostState = rememberStackedSnackbarHostState()
-
-    LaunchedEffect(errorFlow) {
-        errorFlow.collect { snackbar ->
-            stackedSnackbarHostState.showSnackbar(snackbar)
-        }
-    }
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
+    ConnectedDeviceScaffold(
+        errorFlow = errorFlow,
+        textInputState = tvTextInputState,
         topBar = {
             ControllerTopAppBar(
-                title = stringResource(R.string.controller_title),
+                title = stringResource(string.controller_title),
                 navigateUp = navigateUp,
             )
         },
-        snackbarHost = { StackedSnackbarHost(hostState = stackedSnackbarHostState) },
-    ) { innerPadding ->
+    ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(ControlsSpacing),
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(horizontal = 32.dp, vertical = 16.dp)
+            modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
         ) {
             Header(
                 deviceName = controllerUiState.deviceName,
@@ -493,7 +483,16 @@ object PreviewDevice : Device {
     override val friendlyName: String = "Living Room TV"
     override val tv: Tv = Tv(id, friendlyName, "Living Room TV", false, emptyList(), emptyList())
     override val state: Flow<DeviceState> =
-        flowOf(DeviceState("Living Room TV", DeviceStatus.CONNECTED, "", emptyList(), emptyList()))
+        flowOf(
+            DeviceState(
+                displayName = "Living Room TV",
+                status = DeviceStatus.CONNECTED,
+                runningApp = "",
+                apps = emptyList(),
+                inputs = emptyList(),
+                isKeyboardOpen = true,
+            )
+        )
     override val errors: Flow<Snackbar> = flowOf()
 
     override fun hasCapability(capability: String): Boolean = true
@@ -517,6 +516,9 @@ object PreviewDevice : Device {
     override fun qmenu() {}
     override fun launchNetflix() {}
     override fun launchApp(appId: String) {}
+    override fun sendText(text: String) {}
+    override fun sendEnter() {}
+    override fun sendDelete() {}
     override fun disconnect() {}
     override fun updateStatus(status: DeviceStatus) {}
 }

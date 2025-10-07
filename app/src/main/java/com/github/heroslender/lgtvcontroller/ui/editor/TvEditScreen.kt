@@ -11,14 +11,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R.string
+import com.github.heroslender.lgtvcontroller.ui.ConnectedDeviceScaffold
 import com.github.heroslender.lgtvcontroller.ui.preferences.SwitchPrefence
 import com.github.heroslender.lgtvcontroller.ui.preferences.TextPrefence
 import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
@@ -68,21 +71,23 @@ fun TvEditScreen(
     tvEditViewModel: TvEditViewModel = hiltViewModel(),
     navigateBack: () -> Unit,
 ) {
-    Scaffold(
+    val textInputState by tvEditViewModel.tvTextInputState.collectAsState()
+
+    ConnectedDeviceScaffold(
+        errorFlow = tvEditViewModel.errors,
+        textInputState = textInputState,
         topBar = {
             ControllerTopAppBar(
                 title = stringResource(string.edit_tv_title),
                 navigateUp = navigateBack,
             )
-        }
-    ) { innerPadding ->
+        },
+    ) {
         TvEditBody(
             uiState = tvEditViewModel.tvUiState,
             onValueChange = tvEditViewModel::updateUiState,
             modifier = Modifier
-                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .fillMaxWidth()
         )
     }
 }

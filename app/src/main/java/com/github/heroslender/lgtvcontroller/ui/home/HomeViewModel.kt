@@ -37,6 +37,7 @@ class HomeViewModel @Inject constructor(
                     hasCapability = device::hasCapability,
                     executeButton = device::executeControllerButton,
                     launchApp = device::launchApp,
+                    isKeyboardOpen = deviceState.isKeyboardOpen,
                     sendBackspace = device::sendDelete,
                     sendEnter = device::sendEnter,
                     sendText = device::sendText,

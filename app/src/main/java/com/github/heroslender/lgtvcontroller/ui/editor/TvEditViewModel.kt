@@ -10,10 +10,21 @@ import androidx.lifecycle.viewModelScope
 import com.github.heroslender.lgtvcontroller.DeviceManager
 import com.github.heroslender.lgtvcontroller.domain.model.Tv
 import com.github.heroslender.lgtvcontroller.storage.TvRepository
+import com.github.heroslender.lgtvcontroller.ui.TvTextInputState
 import com.github.heroslender.lgtvcontroller.ui.navigation.NavDest
 import com.github.heroslender.lgtvcontroller.ui.preferences.InputValidator
+import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,9 +34,32 @@ class TvEditViewModel @Inject constructor(
     private val tvRepository: TvRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+    val tvTextInputState: StateFlow<TvTextInputState> =
+        deviceManager.connectedDevice.flatMapLatest { device ->
+            if (device == null) {
+                return@flatMapLatest flowOf(TvTextInputState())
+            }
+
+            device.state.map { deviceState ->
+                TvTextInputState(
+                    isKeyboardOpen = deviceState.isKeyboardOpen,
+                    sendBackspace = device::sendDelete,
+                    sendEnter = device::sendEnter,
+                    sendText = device::sendText,
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, TvTextInputState())
 
     var tvUiState by mutableStateOf(TvUiState(TvDetails("Loading...", "Loading..."), this::validateDisplayName))
         private set
+
+    val errors: Flow<Snackbar> = deviceManager.connectedDevice.flatMapConcat { device ->
+        if (device == null) {
+            deviceManager.errors
+        } else {
+            merge(device.errors, deviceManager.errors)
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -43,7 +77,7 @@ class TvEditViewModel @Inject constructor(
 
     fun updateUiState(uiState: TvDetails) {
         val oldState = tvUiState
-        tvUiState = tvUiState.copy(tvDetails = uiState, isValid =  validateInput(uiState))
+        tvUiState = tvUiState.copy(tvDetails = uiState, isValid = validateInput(uiState))
 
         if (tvUiState.isValid && oldState != tvUiState) {
             Log.d("TvEditViewModel", "Updating TV details: $tvUiState")
