@@ -1,4 +1,4 @@
-<img src=".github/assets/icon.png" alt="Elytra" title="LG TV Controller" align="right"/>
+<img src=".github/assets/icon.png" alt="LG TV Controller" title="LG TV Controller" align="right"/>
 
 ## LG TV Controller
 
@@ -20,6 +20,7 @@ therefore unusable, so I decided to make an add free one that I could use withou
   * [Device list](#device-list)
   * [Device Home](#device-home)
   * [Device Controller](#device-controller)
+  * [Device Settings](#device-settings)
 
 ### Current UI
 
@@ -46,3 +47,10 @@ Light Theme                |  Dark Theme
 Light Theme                |  Dark Theme
 :-------------------------:|:-------------------------:
 ![Controller light theme](.github/assets/controller.jpg)  |  ![Controller dark theme](.github/assets/controller_dark.jpg)
+
+#### Device Settings
+
+Light Theme                |  Dark Theme
+:-------------------------:|:-------------------------:
+![Settings light theme](.github/assets/tv_settings.jpeg)  |  ![Settings dark theme](.github/assets/tv_settings_dark.jpeg)
+
