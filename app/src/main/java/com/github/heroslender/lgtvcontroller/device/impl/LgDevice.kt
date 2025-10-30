@@ -7,6 +7,7 @@ import com.connectsdk.core.ExternalInputInfo
 import com.connectsdk.core.TextInputStatusInfo
 import com.connectsdk.service.WebOSTVService
 import com.connectsdk.service.capability.ExternalInputControl
+import com.connectsdk.service.capability.KeyControl
 import com.connectsdk.service.capability.Launcher
 import com.connectsdk.service.capability.TextInputControl
 import com.connectsdk.service.command.ServiceCommandError
@@ -105,7 +106,8 @@ class LgDevice(
     }
 
     override fun ok() {
-        service.keyControl.ok(null)
+        service.keyControl.sendKeyCode(KeyControl.KeyCode.ENTER, null)
+//        service.keyControl.ok(null)
     }
 
     override fun back() {
