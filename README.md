@@ -7,6 +7,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/heroslender/lg-remote)](https://github.com/heroslender/lg-remote/commit)
 [![GitHub last commit](https://img.shields.io/github/downloads/heroslender/lg-remote/total)](https://github.com/heroslender/lg-remote/releases)
 [![GitHub Tag](https://img.shields.io/github/v/tag/heroslender/lg-remote?label=Version)](https://github.com/heroslender/lg-remote/releases/latest)
+[![Discord](https://img.shields.io/discord/455337556746305538?label=Discord&logo=Discord&logoColor=white&labelColor=7289da&color=555555)](https://discord.gg/nWX7apX)
 
 An ad free android app to control your LG television.
 
