@@ -1,7 +1,6 @@
 package com.github.heroslender.lgtvcontroller.device.impl
 
 import android.util.Log
-import androidx.room.util.copy
 import com.connectsdk.core.AppInfo
 import com.connectsdk.core.ExternalInputInfo
 import com.connectsdk.core.TextInputStatusInfo
@@ -277,7 +276,7 @@ class LgDevice(
     }
 
     override fun sendText(text: String) {
-     device.device.textInputControl.sendText(text)
+        device.device.textInputControl.sendText(text)
     }
 
     override fun sendEnter() {
@@ -288,9 +287,22 @@ class LgDevice(
         device.device.textInputControl.sendDelete()
     }
 
+    override fun mouseClick() {
+        service.mouseControl.click()
+    }
+
+    override fun moveMouse(x: Double, y: Double) {
+        service.mouseControl.move(x, y)
+    }
+
+    override fun scroll(x: Double, y: Double) {
+        service.mouseControl.scroll(x, y)
+    }
+
     fun subscribeTextInputListener() {
         val textInputControl = device.device.getCapability(TextInputControl::class.java)
-        textInputControl.subscribeTextInputStatus(object : TextInputControl.TextInputStatusListener {
+        textInputControl.subscribeTextInputStatus(object :
+            TextInputControl.TextInputStatusListener {
             override fun onSuccess(statusInfo: TextInputStatusInfo) {
                 if (statusInfo.contentType != null) {
                     _state.update { it.copy(isKeyboardOpen = true) }

@@ -29,7 +29,7 @@ import com.github.heroslender.lgtvcontroller.ui.theme.LGTVControllerTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ControlPreview() {
+fun TvEditPreview() {
     LGTVControllerTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),

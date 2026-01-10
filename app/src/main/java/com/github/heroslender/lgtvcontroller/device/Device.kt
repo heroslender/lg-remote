@@ -112,6 +112,12 @@ interface Device {
 
     fun launchNetflix()
 
+    fun mouseClick()
+
+    fun moveMouse(x: Double, y: Double)
+
+    fun scroll(x: Double, y: Double)
+
     fun launchApp(appId: String)
 
     fun sendText(text: String)

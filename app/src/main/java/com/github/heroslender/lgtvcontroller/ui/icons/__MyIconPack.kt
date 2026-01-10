@@ -3,6 +3,7 @@ package com.github.heroslender.lgtvcontroller.ui.icons
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.Exclamation
 import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.InfoI
+import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.TrackpadInput
 import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.TvRemote
 import kotlin.collections.List as ____KtList
 
@@ -15,6 +16,6 @@ val MyIconPack.AllIcons: ____KtList<ImageVector>
         if (__AllIcons != null) {
             return __AllIcons!!
         }
-        __AllIcons = listOf(TvRemote, InfoI, Exclamation)
+        __AllIcons = listOf(TvRemote, InfoI, Exclamation, TrackpadInput)
         return __AllIcons!!
     }

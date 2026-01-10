@@ -118,6 +118,7 @@ class DeviceManager(
         scope.launch {
             try {
                 (device as LgDevice).loadAppsAndInputs()
+                device.device.device.mouseControl.connectMouse()
             } catch (e: Exception) {
                 Log.e(
                     "DeviceManager",

@@ -70,6 +70,7 @@ import com.github.heroslender.lgtvcontroller.R.string
 import com.github.heroslender.lgtvcontroller.TopAppBarAction
 import com.github.heroslender.lgtvcontroller.device.DeviceControllerButton
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
+import com.github.heroslender.lgtvcontroller.device.impl.PreviewDevice
 import com.github.heroslender.lgtvcontroller.domain.model.App
 import com.github.heroslender.lgtvcontroller.domain.model.Input
 import com.github.heroslender.lgtvcontroller.ui.ConnectedDeviceScaffold
@@ -77,7 +78,6 @@ import com.github.heroslender.lgtvcontroller.ui.TvTextInputState
 import com.github.heroslender.lgtvcontroller.ui.controller.ButtonShape
 import com.github.heroslender.lgtvcontroller.ui.controller.CIconButton
 import com.github.heroslender.lgtvcontroller.ui.controller.CTextButton
-import com.github.heroslender.lgtvcontroller.ui.controller.PreviewDevice
 import com.github.heroslender.lgtvcontroller.ui.icons.MyIconPack
 import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.TvRemote
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
@@ -484,6 +484,7 @@ fun ScrollContentCard(
 fun Card(
     iconVector: ImageVector,
     header: String,
+    modifier: Modifier = Modifier,
     colors: CardColors = CardDefaults.elevatedCardColors(),
     openCardIcon: ImageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
     openCard: (() -> Unit)? = null,
@@ -518,14 +519,14 @@ fun Card(
 
     if (openCard != null) {
         ElevatedCard(
-            modifier = Modifier.padding(top = 16.dp),
+            modifier = modifier.padding(top = 16.dp),
             onClick = openCard,
             colors = colors,
             content = cardContent
         )
     } else {
         ElevatedCard(
-            modifier = Modifier.padding(top = 16.dp),
+            modifier = modifier.padding(top = 16.dp),
             colors = colors,
             content = cardContent
         )
@@ -536,6 +537,7 @@ fun Card(
 fun ContentCard(
     iconVector: ImageVector,
     header: String,
+    modifier: Modifier = Modifier,
     colors: CardColors = CardDefaults.elevatedCardColors(),
     openCard: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
@@ -544,6 +546,7 @@ fun ContentCard(
         iconVector = iconVector,
         header = header,
         colors = colors,
+        modifier = modifier,
         openCard = openCard,
     ) {
         Box(

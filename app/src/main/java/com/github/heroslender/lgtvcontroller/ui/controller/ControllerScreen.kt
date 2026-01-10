@@ -1,6 +1,8 @@
 package com.github.heroslender.lgtvcontroller.ui.controller
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.draggable2D
+import androidx.compose.foundation.gestures.rememberDraggable2DState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,15 +21,20 @@ import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.filled.KeyboardAlt
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
@@ -39,18 +47,17 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.github.heroslender.lgtvcontroller.ControllerTopAppBar
 import com.github.heroslender.lgtvcontroller.R
 import com.github.heroslender.lgtvcontroller.R.string
-import com.github.heroslender.lgtvcontroller.device.Device
 import com.github.heroslender.lgtvcontroller.device.DeviceControllerButton
-import com.github.heroslender.lgtvcontroller.device.DeviceState
 import com.github.heroslender.lgtvcontroller.device.DeviceStatus
-import com.github.heroslender.lgtvcontroller.domain.model.Tv
+import com.github.heroslender.lgtvcontroller.device.impl.PreviewDevice
 import com.github.heroslender.lgtvcontroller.ui.ConnectedDeviceScaffold
 import com.github.heroslender.lgtvcontroller.ui.TvTextInputState
+import com.github.heroslender.lgtvcontroller.ui.icons.MyIconPack
+import com.github.heroslender.lgtvcontroller.ui.icons.myiconpack.TrackpadInput
 import com.github.heroslender.lgtvcontroller.ui.snackbar.Snackbar
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,15 +135,22 @@ fun ControllerScreen(
             verticalArrangement = Arrangement.spacedBy(ControlsSpacing),
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
         ) {
+            var trackpadEnabled by remember { mutableStateOf(false) }
             Header(
                 deviceName = controllerUiState.deviceName,
                 deviceStatus = controllerUiState.deviceStatus,
+                trackpadEnabled = trackpadEnabled,
+                setTrackpadEnabled = { trackpadEnabled = it },
                 hasPowerCapability = controllerUiState.hasCapability(DeviceControllerButton.POWER),
                 powerOff = { controllerUiState.executeButton(DeviceControllerButton.POWER) },
                 navigateToDeviceList = navigateUp,
             )
 
             Controls(
+                trackpadEnabled = trackpadEnabled,
+                clickMouse = controllerUiState.clickMouse,
+                moveMouse = controllerUiState.moveMouse,
+                scroll = controllerUiState.scroll,
                 hasCapability = controllerUiState.hasCapability,
                 executeButton = controllerUiState.executeButton,
             )
@@ -148,6 +162,8 @@ fun ControllerScreen(
 fun Header(
     deviceName: String?,
     deviceStatus: DeviceStatus,
+    trackpadEnabled: Boolean,
+    setTrackpadEnabled: (Boolean) -> Unit,
     hasPowerCapability: Boolean,
     powerOff: () -> Unit,
     navigateToDeviceList: () -> Unit,
@@ -183,6 +199,22 @@ fun Header(
                     )
                 }
             }
+
+            Row(horizontalArrangement = Arrangement.Absolute.Right) {
+                FilledIconButton(
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    ),
+                    onClick = {
+                        setTrackpadEnabled(!trackpadEnabled)
+                    },
+                ) {
+                    Icon(
+                        imageVector = if (trackpadEnabled) Icons.Filled.KeyboardAlt else MyIconPack.TrackpadInput,
+                        contentDescription = stringResource(string.power_button),
+                    )
+                }
+            }
         }
     }
 }
@@ -211,11 +243,17 @@ fun PowerButton(
 
 @Composable
 fun ColumnScope.Controls(
+    trackpadEnabled: Boolean,
+    clickMouse: () -> Unit,
+    moveMouse: (Double, Double) -> Unit,
+    scroll: (Double, Double) -> Unit,
     hasCapability: (DeviceControllerButton) -> Boolean,
     executeButton: (DeviceControllerButton) -> Unit,
 ) {
     Column(
-        modifier = Modifier.verticalScroll(rememberScrollState())
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(ControlsSpacing),
@@ -270,133 +308,157 @@ fun ColumnScope.Controls(
             )
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(ControlsSpacing),
-            modifier = Modifier
-                .height(IntrinsicSize.Min)
-                .fillMaxWidth()
-        ) {
-            CIconButton(
-                iconId = R.drawable.baseline_home_24,
-                contentDescription = stringResource(string.home_button),
-                enabled = hasCapability(DeviceControllerButton.HOME),
+        if (trackpadEnabled) {
+            ElevatedCard(
                 modifier = Modifier
-                    .aspectRatio(1F, true)
+                    .fillMaxWidth()
                     .weight(1F)
-                    .padding(bottom = ControlsSpacing),
-            ) {
-                executeButton(DeviceControllerButton.HOME)
-            }
+                    .padding(bottom = 8.dp)
+                    .draggable2D(
+                        state = rememberDraggable2DState { delta ->
+                            moveMouse(delta.x.toDouble(), delta.y.toDouble())
+                        },
+                    )
+                    .clickable(onClick = {
+                        clickMouse()
+                    })
+            ) {}
 
-            CIconButton(
-                iconId = R.drawable.baseline_keyboard_arrow_up_24,
-                contentDescription = stringResource(string.up_button),
-                enabled = hasCapability(DeviceControllerButton.UP),
-                shape = ButtonShape.copy(
-                    bottomEnd = CornerSize(0.dp),
-                    bottomStart = CornerSize(0.dp)
-                ),
+        } else {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(ControlsSpacing),
                 modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F),
+                    .height(IntrinsicSize.Min)
+                    .fillMaxWidth()
             ) {
-                executeButton(DeviceControllerButton.UP)
-            }
+                CIconButton(
+                    iconId = R.drawable.baseline_home_24,
+                    contentDescription = stringResource(string.home_button),
+                    enabled = hasCapability(DeviceControllerButton.HOME),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F)
+                        .padding(bottom = ControlsSpacing),
+                ) {
+                    executeButton(DeviceControllerButton.HOME)
+                }
 
-            CIconButton(
-                iconId = R.drawable.baseline_settings_24,
-                contentDescription = stringResource(string.settings_button),
-                enabled = hasCapability(DeviceControllerButton.QMENU),
-                modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F)
-                    .padding(bottom = ControlsSpacing),
-            ) {
-                executeButton(DeviceControllerButton.QMENU)
-            }
-        }
-        Row(
-            modifier = Modifier
-                .height(IntrinsicSize.Min)
-                .fillMaxWidth()
-        ) {
-            CIconButton(
-                iconId = R.drawable.baseline_keyboard_arrow_left_24,
-                contentDescription = stringResource(string.left_button),
-                enabled = hasCapability(DeviceControllerButton.LEFT),
-                shape = ButtonShape.copy(topEnd = CornerSize(0.dp), bottomEnd = CornerSize(0.dp)),
-                modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F),
-            ) {
-                executeButton(DeviceControllerButton.LEFT)
-            }
+                CIconButton(
+                    iconId = R.drawable.baseline_keyboard_arrow_up_24,
+                    contentDescription = stringResource(string.up_button),
+                    enabled = hasCapability(DeviceControllerButton.UP),
+                    shape = ButtonShape.copy(
+                        bottomEnd = CornerSize(0.dp),
+                        bottomStart = CornerSize(0.dp)
+                    ),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F),
+                ) {
+                    executeButton(DeviceControllerButton.UP)
+                }
 
-            CTextButton(
-                text = stringResource(string.ok_button),
-                shape = CutCornerShape(0.dp),
-                enabled = hasCapability(DeviceControllerButton.OK),
-                modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F),
-            ) {
-                executeButton(DeviceControllerButton.OK)
+                CIconButton(
+                    iconId = R.drawable.baseline_settings_24,
+                    contentDescription = stringResource(string.settings_button),
+                    enabled = hasCapability(DeviceControllerButton.QMENU),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F)
+                        .padding(bottom = ControlsSpacing),
+                ) {
+                    executeButton(DeviceControllerButton.QMENU)
+                }
             }
+            Row(
+                modifier = Modifier
+                    .height(IntrinsicSize.Min)
+                    .fillMaxWidth()
+            ) {
+                CIconButton(
+                    iconId = R.drawable.baseline_keyboard_arrow_left_24,
+                    contentDescription = stringResource(string.left_button),
+                    enabled = hasCapability(DeviceControllerButton.LEFT),
+                    shape = ButtonShape.copy(
+                        topEnd = CornerSize(0.dp),
+                        bottomEnd = CornerSize(0.dp)
+                    ),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F),
+                ) {
+                    executeButton(DeviceControllerButton.LEFT)
+                }
 
-            CIconButton(
-                iconId = R.drawable.baseline_keyboard_arrow_right_24,
-                contentDescription = stringResource(string.right_button),
-                shape = ButtonShape.copy(
-                    topStart = CornerSize(0.dp),
-                    bottomStart = CornerSize(0.dp)
-                ),
-                enabled = hasCapability(DeviceControllerButton.RIGHT),
-                modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F),
-            ) {
-                executeButton(DeviceControllerButton.RIGHT)
-            }
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(ControlsSpacing),
-            modifier = Modifier
-                .height(IntrinsicSize.Min)
-                .fillMaxWidth()
-        ) {
-            CIconButton(
-                iconId = R.drawable.baseline_arrow_back_24,
-                contentDescription = stringResource(string.back_button),
-                enabled = hasCapability(DeviceControllerButton.BACK),
-                modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F)
-                    .padding(top = ControlsSpacing),
-            ) {
-                executeButton(DeviceControllerButton.BACK)
-            }
+                CTextButton(
+                    text = stringResource(string.ok_button),
+                    shape = CutCornerShape(0.dp),
+                    enabled = hasCapability(DeviceControllerButton.OK),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F),
+                ) {
+                    executeButton(DeviceControllerButton.OK)
+                }
 
-            CIconButton(
-                iconId = R.drawable.baseline_keyboard_arrow_down_24,
-                contentDescription = stringResource(string.down_button),
-                shape = ButtonShape.copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp)),
-                enabled = hasCapability(DeviceControllerButton.DOWN),
-                modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F),
-            ) {
-                executeButton(DeviceControllerButton.DOWN)
+                CIconButton(
+                    iconId = R.drawable.baseline_keyboard_arrow_right_24,
+                    contentDescription = stringResource(string.right_button),
+                    shape = ButtonShape.copy(
+                        topStart = CornerSize(0.dp),
+                        bottomStart = CornerSize(0.dp)
+                    ),
+                    enabled = hasCapability(DeviceControllerButton.RIGHT),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F),
+                ) {
+                    executeButton(DeviceControllerButton.RIGHT)
+                }
             }
-
-            CTextButton(
-                text = "Exit",
-                enabled = hasCapability(DeviceControllerButton.EXIT),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(ControlsSpacing),
                 modifier = Modifier
-                    .aspectRatio(1F, true)
-                    .weight(1F)
-                    .padding(top = ControlsSpacing),
+                    .height(IntrinsicSize.Min)
+                    .fillMaxWidth()
             ) {
-                executeButton(DeviceControllerButton.EXIT)
+                CIconButton(
+                    iconId = R.drawable.baseline_arrow_back_24,
+                    contentDescription = stringResource(string.back_button),
+                    enabled = hasCapability(DeviceControllerButton.BACK),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F)
+                        .padding(top = ControlsSpacing),
+                ) {
+                    executeButton(DeviceControllerButton.BACK)
+                }
+
+                CIconButton(
+                    iconId = R.drawable.baseline_keyboard_arrow_down_24,
+                    contentDescription = stringResource(string.down_button),
+                    shape = ButtonShape.copy(
+                        topStart = CornerSize(0.dp),
+                        topEnd = CornerSize(0.dp)
+                    ),
+                    enabled = hasCapability(DeviceControllerButton.DOWN),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F),
+                ) {
+                    executeButton(DeviceControllerButton.DOWN)
+                }
+
+                CTextButton(
+                    text = "Exit",
+                    enabled = hasCapability(DeviceControllerButton.EXIT),
+                    modifier = Modifier
+                        .aspectRatio(1F, true)
+                        .weight(1F)
+                        .padding(top = ControlsSpacing),
+                ) {
+                    executeButton(DeviceControllerButton.EXIT)
+                }
             }
         }
     }
@@ -478,47 +540,3 @@ fun RowScope.ChannelControls(
     )
 }
 
-object PreviewDevice : Device {
-    override val id: String = "gads-sdgfds-g-fdsgfdgdf-sdfsdf"
-    override val friendlyName: String = "Living Room TV"
-    override val tv: Tv = Tv(id, friendlyName, "Living Room TV", false, emptyList(), emptyList())
-    override val state: Flow<DeviceState> =
-        flowOf(
-            DeviceState(
-                displayName = "Living Room TV",
-                status = DeviceStatus.CONNECTED,
-                runningApp = "",
-                apps = emptyList(),
-                inputs = emptyList(),
-                isKeyboardOpen = true,
-            )
-        )
-    override val errors: Flow<Snackbar> = flowOf()
-
-    override fun hasCapability(capability: String): Boolean = true
-    override fun powerOff() {}
-    override fun volumeUp() {}
-    override fun volumeDown() {}
-    override fun mute() {}
-    override fun channelUp() {}
-    override fun channelDown() {}
-    override fun up() {}
-    override fun down() {}
-    override fun left() {}
-    override fun right() {}
-    override fun ok() {}
-    override fun back() {}
-    override fun exit() {}
-    override fun home() {}
-    override fun info() {}
-    override fun source() {}
-    override fun menu() {}
-    override fun qmenu() {}
-    override fun launchNetflix() {}
-    override fun launchApp(appId: String) {}
-    override fun sendText(text: String) {}
-    override fun sendEnter() {}
-    override fun sendDelete() {}
-    override fun disconnect() {}
-    override fun updateStatus(status: DeviceStatus) {}
-}
