@@ -43,20 +43,16 @@ class DeviceManager(
     private val _errors = MutableSharedFlow<Snackbar>()
     val errors: Flow<Snackbar> = _errors
 
-    private var hasConnected = false
+    var appStatus = AppStatus.AWAITING_FIRST_CONNECTION
+        private set
 
     /**
-     * Whether the app is running in the background or not.
+     * The id of the tv that was connected when the app was paused.
      * This is because when the app is in the background, it looses connection to the internet,
      * and therefore, disconnects from the tv. This is used to reconnect back to the tv when the
      * app returns to the foreground.
      */
-    private var isAppPaused = false
-
-    /**
-     * The id of the tv that was connected when the app was paused.
-     */
-    private var connectedTvId: String? = null
+    private var pausedTvId: String? = null
 
     init {
         try {
@@ -76,7 +72,7 @@ class DeviceManager(
 
             scope.launch {
                 try {
-                    while (!hasConnected) {
+                    while (appStatus == AppStatus.AWAITING_FIRST_CONNECTION) {
                         for (discoveryProvider in DiscoveryManager.getInstance().discoveryProviders) {
                             Log.d(
                                 "Device_Manager",
@@ -131,8 +127,8 @@ class DeviceManager(
     }
 
     fun onDeviceDisconnected(device: Device) {
-        if (isAppPaused) {
-            this.connectedTvId = device.id
+        if (appStatus == AppStatus.PAUSED) {
+            this.pausedTvId = device.id
         }
 
         val networkDevice = getDevice(device.id) ?: return
@@ -175,7 +171,7 @@ class DeviceManager(
     }
 
     override fun onDeviceRemoved(manager: DiscoveryManager, device: ConnectableDevice) {
-        Log.d("Device_Manager", "onDeviceRemoved :::: ${device.friendlyName}")
+        Log.d("Device_Manager", "onDeviceRemoved :::: ${device.friendlyName}; ${device.id}")
         _devices.tryEmit(devices.value.toMutableList().apply { removeIf { it.id == device.id } })
     }
 
@@ -234,7 +230,8 @@ class DeviceManager(
         cDevice.device.connect()
 
         _connectedDevice.value = device
-        hasConnected = true
+        appStatus = AppStatus.RUNNING
+        pausedTvId = null
 
         scope.launch {
             tvRepository.insertTv(Tv(id = device.id, name = device.friendlyName))
@@ -242,12 +239,17 @@ class DeviceManager(
     }
 
     private fun autoConnect(device: LgNetworkDevice) {
-        if (hasConnected || !device.isCompatible()) {
+        if (!device.isCompatible()) {
+            return
+        }
+
+        if ((appStatus != AppStatus.AWAITING_FIRST_CONNECTION || !device.tv.autoConnect)
+            && (appStatus != AppStatus.AWAITING_CONNECTION_AFTER_PAUSE || device.id != pausedTvId)) {
             return
         }
 
         scope.launch {
-            if (!hasConnected && device.tv.autoConnect && device.isCompatible()) {
+            if (appStatus != AppStatus.RUNNING  || device.tv.autoConnect) {
                 Log.d("Device_Manager", "Connecting to device favorite")
                 connect(device)
             }
@@ -268,20 +270,31 @@ class DeviceManager(
     }
 
     fun resume() {
-        isAppPaused = false
+        appStatus = AppStatus.AWAITING_CONNECTION_AFTER_PAUSE
 
-        val connectedTvId = connectedTvId ?: return
-        this.connectedTvId = null
+        val connectedTvId = pausedTvId ?: return
 
         if (connectedDevice.value != null) {
+            Log.d("Device_Manager", "Resuming app. Already connected to a device.")
             return
         }
 
-        val networkDevice = getDevice(connectedTvId) ?: return
+        val networkDevice = getDevice(connectedTvId)
+        if (networkDevice == null) {
+            Log.d(
+                "Device_Manager",
+                "Cached device not found, running a rescan..."
+            )
+            for (discoveryProvider in DiscoveryManager.getInstance().discoveryProviders) {
+                discoveryProvider.rescan()
+            }
+            return
+        }
         networkDevice.connect()
+        this.pausedTvId = null
     }
 
     fun pause() {
-        isAppPaused = true
+        appStatus = AppStatus.PAUSED
     }
 }
