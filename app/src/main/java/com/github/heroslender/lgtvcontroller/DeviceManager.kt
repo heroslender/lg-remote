@@ -85,7 +85,9 @@ class DeviceManager(
                             discoveryProvider.rescan()
                         }
 
-                        delay(2000)
+                        // discoveryProvider.rescan sends 3 scans with 1000ms interval, so
+                        // we set the delay here for 4000ms
+                        delay(4000)
                     }
                 } catch (e: Exception) {
                     Log.e("Device_Manager", "rescan :::: " + e.message)
