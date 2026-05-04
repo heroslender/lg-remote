@@ -199,6 +199,8 @@ class DeviceManager(
 
                 _devices.tryEmit(listOf(*devices.value.toTypedArray(), networkDevice))
 
+                Log.d("Device_Manager", "Device found: ${device.friendlyName}")
+
                 autoConnect(networkDevice)
             } catch (e: Exception) {
                 Log.e("Device_Manager", "Failed to handle device found: ${e.message}")
@@ -239,20 +241,25 @@ class DeviceManager(
     }
 
     private fun autoConnect(device: LgNetworkDevice) {
-        if (!device.isCompatible()) {
-            return
-        }
-
-        if ((appStatus != AppStatus.AWAITING_FIRST_CONNECTION || !device.tv.autoConnect)
-            && (appStatus != AppStatus.AWAITING_CONNECTION_AFTER_PAUSE || device.id != pausedTvId)) {
+        if (!device.isCompatible() || !shouldAutoConnect(device)) {
             return
         }
 
         scope.launch {
-            if (appStatus != AppStatus.RUNNING  || device.tv.autoConnect) {
+            if (appStatus != AppStatus.RUNNING || device.tv.autoConnect) {
                 Log.d("Device_Manager", "Connecting to device favorite")
                 connect(device)
             }
+        }
+    }
+
+    fun shouldAutoConnect(device: LgNetworkDevice): Boolean {
+        return when (appStatus) {
+            AppStatus.AWAITING_FIRST_CONNECTION -> device.tv.autoConnect
+            AppStatus.AWAITING_CONNECTION_AFTER_PAUSE ->
+                if (pausedTvId == null) device.tv.autoConnect else pausedTvId == device.id
+
+            else -> false
         }
     }
 
